@@ -26,3 +26,19 @@ def calculate_totals_by_category(expenses):
             result[category] += amount
 
     return result
+
+
+def find_largest_valid_expense(expenses):
+    result = None
+
+    for e in expenses:
+        if validate_amount(e) and validate_category(e):
+            amount = e.get("amount")
+
+            if result is None:
+                result = e.copy()
+
+            if amount > result["amount"]:
+                result = e.copy()
+
+    return result
