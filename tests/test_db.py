@@ -1,4 +1,12 @@
-from db import create_expense, get_connection, get_expense_by_id, get_expenses, init_db
+from db import (
+    create_expense,
+    delete_expense,
+    get_connection,
+    get_expense_by_id,
+    get_expenses,
+    init_db,
+    update_expense,
+)
 from expense_logic import calculate_totals_by_category, find_largest_valid_expense
 
 
@@ -203,3 +211,113 @@ def test_get_expense_by_id_missing(tmp_path, monkeypatch):
     result = get_expense_by_id(999)
 
     assert result is None
+
+
+def test_update_expense_amount(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(100.0, "food", "pizza")
+
+    result = update_expense(1, 200, None, None)
+
+    assert result == {
+        "id": 1,
+        "amount": 200.0,
+        "category": "food",
+        "name": "pizza",
+    }
+
+
+def test_update_expense_category(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(100.0, "transport", "road")
+
+    result = update_expense(1, None, "leisure", None)
+
+    assert result == {
+        "id": 1,
+        "amount": 100.0,
+        "category": "leisure",
+        "name": "road",
+    }
+
+
+def test_update_expense_amount_and_name(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(100.0, "food", "pizza")
+
+    result = update_expense(1, 200, None, "fast food")
+
+    assert result == {
+        "id": 1,
+        "amount": 200.0,
+        "category": "food",
+        "name": "fast food",
+    }
+
+
+def test_update_expense_incorrect_id(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(100.0, "food", "pizza")
+
+    result = update_expense(2, 200, None, None)
+
+    assert result is None
+
+
+def test_delete_expense(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(100.0, "food", "pizza")
+
+    result = delete_expense(1)
+
+    assert result is True
+
+
+def test_delete_expense_found_is_none(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(100.0, "food", "pizza")
+
+    delete_expense(1)
+
+    result = get_expense_by_id(1)
+
+    assert result is None
+
+
+def test_delete_expense_double_is_false(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(100.0, "food", "pizza")
+
+    delete_expense(1)
+
+    result = delete_expense(1)
+
+    assert result is False

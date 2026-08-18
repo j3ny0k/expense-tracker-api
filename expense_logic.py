@@ -12,6 +12,12 @@ def validate_category(expense):
     return isinstance(category, str) and category.strip() != ""
 
 
+def validate_name(expense):
+    name = expense.get("name")
+
+    return isinstance(name, str) and name.strip() != ""
+
+
 def calculate_totals_by_category(expenses):
     result = {}
 

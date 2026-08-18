@@ -71,8 +71,7 @@ def get_expense_by_id(expense_id):
     connection = get_connection()
 
     cursor = connection.execute(
-        "SELECT id, amount, category, name FROM expenses WHERE id = ?",
-        (expense_id,),
+        "SELECT id, amount, category, name FROM expenses WHERE id = ?", (expense_id,)
     )
 
     raw = cursor.fetchone()
@@ -90,3 +89,59 @@ def get_expense_by_id(expense_id):
     connection.close()
 
     return expense
+
+
+def update_expense(expense_id, amount, category, name):
+    connection = get_connection()
+
+    if amount is not None:
+        connection.execute(
+            "UPDATE expenses SET amount = ? WHERE id = ?", (amount, expense_id)
+        )
+
+    if category is not None:
+        connection.execute(
+            "UPDATE expenses SET category = ? WHERE id = ?", (category, expense_id)
+        )
+
+    if name is not None:
+        connection.execute(
+            "UPDATE expenses SET name = ? WHERE id = ?", (name, expense_id)
+        )
+
+    connection.commit()
+
+    expense = get_expense_by_id(expense_id)
+
+    connection.close()
+
+    return expense
+
+
+def delete_expense(expense_id):
+    connection = get_connection()
+
+    cursor = connection.execute(
+        "DELETE FROM expenses WHERE id = ?",
+        (expense_id,),
+    )
+
+    connection.commit()
+
+    deleted_count = cursor.rowcount
+
+    connection.close()
+
+    return deleted_count == 1
+
+
+def delete_expenses():
+    connection = get_connection()
+
+    connection.execute("DELETE FROM expenses")
+
+    connection.commit()
+
+    connection.close()
+
+    return True
