@@ -242,3 +242,110 @@ def test_delete_expenses(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json() == []
+
+
+def test_get_expenses(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        },
+    ]
+
+
+def test_get_expenses_filter_by_category(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?category=food")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        },
+    ]
+
+
+def test_get_expenses_filter_by_name(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?name=pizza")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        }
+    ]
+
+
+def test_get_expenses_filter_by_category_and_name(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+    create_expense(400.0, "transport", "pizza")
+
+    response = client.get("/expenses?category=food&name=pizza")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        }
+    ]

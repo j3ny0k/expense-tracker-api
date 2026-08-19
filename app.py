@@ -44,6 +44,27 @@ def api_create_expense():
 def api_get_expenses():
     expenses = get_expenses()
 
+    category = request.args.get("category")
+    name = request.args.get("name")
+
+    if category:
+        filtered_expenses = []
+
+        for e in expenses:
+            if e["category"] == category:
+                filtered_expenses.append(e)
+
+        expenses = filtered_expenses
+
+    if name:
+        filtered_expenses = []
+
+        for e in expenses:
+            if e["name"] == name:
+                filtered_expenses.append(e)
+
+        expenses = filtered_expenses
+
     return jsonify(expenses), 200
 
 

@@ -109,6 +109,21 @@ An empty database returns:
 []
 ```
 
+Optional query parameters:
+
+- `category` — filter expenses by category;
+- `name` — filter expenses by name.
+
+Examples:
+
+```http
+GET /expenses?category=food
+GET /expenses?name=pizza
+GET /expenses?category=food&name=pizza
+```
+
+When both parameters are provided, an expense must match both filters.
+
 ---
 
 ### Get one expense
@@ -287,7 +302,8 @@ The test suite covers:
 - POST success and validation errors;
 - PATCH success, invalid requests, unknown fields, and missing expenses;
 - DELETE success and missing expenses;
-- deleting all expenses.
+- deleting all expenses;
+- filtering expenses by `category` and `name` query parameters.
 
 ## Run the tests
 
