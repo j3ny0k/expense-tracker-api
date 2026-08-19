@@ -318,7 +318,7 @@ python -m pytest -q
 Install the dependencies used by the project:
 
 ```bash
-pip install flask pytest
+python -m pip install -r requirements.txt
 ```
 
 Start the application:
