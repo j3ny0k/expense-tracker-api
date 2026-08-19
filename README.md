@@ -152,6 +152,37 @@ If the expense does not exist:
 
 ---
 
+### Get totals by category
+
+```http
+GET /expenses/totals
+```
+
+Returns the total expense amount for each category.
+
+Successful response:
+
+```text
+200 OK
+```
+
+Example:
+
+```json
+{
+  "food": 400.0,
+  "transport": 600.0
+}
+```
+
+If there are no expenses, the response is:
+
+```json
+{}
+```
+
+---
+
 ### Update an expense
 
 ```http
@@ -303,7 +334,8 @@ The test suite covers:
 - PATCH success, invalid requests, unknown fields, and missing expenses;
 - DELETE success and missing expenses;
 - deleting all expenses;
-- filtering expenses by `category` and `name` query parameters.
+- filtering expenses by `category` and `name` query parameters;
+- calculating expense totals by category through `GET /expenses/totals`.
 
 ## Run the tests
 
@@ -342,6 +374,7 @@ expense-tracker-api/
 ├── app.py
 ├── db.py
 ├── expense_logic.py
+├── requirements.txt
 ├── README.md
 └── tests/
     ├── test_app.py

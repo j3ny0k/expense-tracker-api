@@ -349,3 +349,30 @@ def test_get_expenses_filter_by_category_and_name(tmp_path, monkeypatch):
             "name": "pizza",
         }
     ]
+
+
+def test_calculate_totals_by_category(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+    create_expense(400.0, "transport", "pizza")
+
+    response = client.get("/expenses/totals")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"food": 400.0, "transport": 600.0}
+
+
+def test_calculate_totals_by_category_empty(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses/totals")
+
+    assert response.status_code == 200
+    assert response.get_json() == {}

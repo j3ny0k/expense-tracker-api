@@ -9,7 +9,12 @@ from db import (
     init_db,
     update_expense,
 )
-from expense_logic import validate_amount, validate_category, validate_name
+from expense_logic import (
+    calculate_totals_by_category,
+    validate_amount,
+    validate_category,
+    validate_name,
+)
 
 app = Flask(__name__)
 
@@ -76,6 +81,15 @@ def api_get_expense_by_id(expense_id):
         return jsonify({"error": "expense not found"}), 404
 
     return jsonify(expense), 200
+
+
+@app.get("/expenses/totals")
+def api_calculate_totals_by_category():
+    expenses = get_expenses()
+
+    total = calculate_totals_by_category(expenses)
+
+    return jsonify(total), 200
 
 
 @app.patch("/expenses/<int:expense_id>")
