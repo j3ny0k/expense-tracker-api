@@ -11,6 +11,7 @@ from db import (
 )
 from expense_logic import (
     calculate_totals_by_category,
+    find_largest_valid_expense,
     validate_amount,
     validate_category,
     validate_name,
@@ -87,9 +88,18 @@ def api_get_expense_by_id(expense_id):
 def api_calculate_totals_by_category():
     expenses = get_expenses()
 
-    total = calculate_totals_by_category(expenses)
+    totals = calculate_totals_by_category(expenses)
 
-    return jsonify(total), 200
+    return jsonify(totals), 200
+
+
+@app.get("/expenses/largest")
+def api_find_largest_valid_expense():
+    expenses = get_expenses()
+
+    largest = find_largest_valid_expense(expenses)
+
+    return jsonify(largest), 200
 
 
 @app.patch("/expenses/<int:expense_id>")

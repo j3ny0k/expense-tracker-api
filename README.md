@@ -183,6 +183,39 @@ If there are no expenses, the response is:
 
 ---
 
+### Get largest expense
+
+```http
+GET /expenses/largest
+```
+
+Returns the expense with the largest amount.
+
+Successful response:
+
+```text
+200 OK
+```
+
+Example:
+
+```json
+{
+  "id": 2,
+  "amount": 200.0,
+  "category": "transport",
+  "name": "bus"
+}
+```
+
+If there are no expenses, the response is:
+
+```json
+null
+```
+
+---
+
 ### Update an expense
 
 ```http
@@ -335,7 +368,8 @@ The test suite covers:
 - DELETE success and missing expenses;
 - deleting all expenses;
 - filtering expenses by `category` and `name` query parameters;
-- calculating expense totals by category through `GET /expenses/totals`.
+- calculating expense totals by category through `GET /expenses/totals`;
+- finding the largest expense through `GET /expenses/largest`.
 
 ## Run the tests
 

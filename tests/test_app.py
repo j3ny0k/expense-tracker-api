@@ -376,3 +376,33 @@ def test_calculate_totals_by_category_empty(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json() == {}
+
+
+def test_find_largest_valid_expense(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+
+    response = client.get("/expenses/largest")
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "id": 2,
+        "amount": 200.0,
+        "category": "transport",
+        "name": "bus",
+    }
+
+
+def test_find_largest_valid_expense_empty(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses/largest")
+
+    assert response.status_code == 200
+    assert response.get_json() is None
