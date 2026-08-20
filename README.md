@@ -112,7 +112,9 @@ An empty database returns:
 Optional query parameters:
 
 - `category` — filter expenses by category;
-- `name` — filter expenses by name.
+- `name` — filter expenses by name;
+- `min_amount` — filter expenses with amount greater than or equal to this value;
+- `max_amount` — filter expenses with amount less than or equal to this value.
 
 Examples:
 
@@ -120,9 +122,27 @@ Examples:
 GET /expenses?category=food
 GET /expenses?name=pizza
 GET /expenses?category=food&name=pizza
+GET /expenses?min_amount=100
+GET /expenses?max_amount=500
+GET /expenses?min_amount=100&max_amount=500
+GET /expenses?category=food&min_amount=100
 ```
 
-When both parameters are provided, an expense must match both filters.
+When multiple parameters are provided, an expense must match all of the specified filters.
+
+`min_amount` and `max_amount` must be valid numbers.
+
+Invalid amount filters return:
+
+```text
+400 Bad Request
+```
+
+If `min_amount` is greater than `max_amount`, the request also returns:
+
+```text
+400 Bad Request
+```
 
 ---
 
@@ -369,7 +389,8 @@ The test suite covers:
 - deleting all expenses;
 - filtering expenses by `category` and `name` query parameters;
 - calculating expense totals by category through `GET /expenses/totals`;
-- finding the largest expense through `GET /expenses/largest`.
+- finding the largest expense through `GET /expenses/largest`;
+- filtering expenses by `min_amount` and `max_amount` query parameters.
 
 ## Run the tests
 

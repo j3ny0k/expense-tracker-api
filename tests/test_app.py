@@ -406,3 +406,180 @@ def test_find_largest_valid_expense_empty(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json() is None
+
+
+def test_min_amount(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "pizza")
+
+    response = client.get("/expenses?min_amount=200")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "pizza",
+        },
+    ]
+
+
+def test_max_amount(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "pizza")
+
+    response = client.get("/expenses?max_amount=200")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+    ]
+
+
+def test_min_and_max_amount(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "pizza")
+
+    response = client.get("/expenses?min_amount=150&max_amount=250")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        }
+    ]
+
+
+def test_min_amount_error(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+
+    response = client.get("/expenses?min_amount=abc")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "amount is required"}
+
+
+def test_max_amount_error(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+
+    response = client.get("/expenses?max_amount=abc")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "amount is required"}
+
+
+def test_min_and_max_amount_error(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "pizza")
+
+    response = client.get("/expenses?min_amount=450&max_amount=250")
+
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "error": "max amount must be greater than min amount"
+    }
+
+
+def test_min_amount0(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "pizza")
+
+    response = client.get("/expenses?min_amount=0")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "pizza",
+        },
+    ]
+
+
+def test_get_expenses_filter_by_category_and_min_amount(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?category=food&min_amount=200")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        }
+    ]
