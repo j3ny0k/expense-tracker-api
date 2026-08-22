@@ -58,6 +58,10 @@ def api_get_expenses():
 
     max_amount = request.args.get("max_amount")
 
+    limit = request.args.get("limit")
+
+    offset = request.args.get("offset")
+
     if category:
         filtered_expenses = []
 
@@ -109,6 +113,49 @@ def api_get_expenses():
 
         expenses = filtered_expenses
 
+    if limit is not None:
+        if offset is not None:
+            try:
+                limit = int(limit)
+            except ValueError:
+                return jsonify({"error": "limit must be an integer"}), 400
+
+            if limit <= 0:
+                return jsonify({"error": "limit must be greater than 0"}), 400
+
+            try:
+                offset = int(offset)
+            except ValueError:
+                return jsonify({"error": "offset must be an integer"}), 400
+
+            if offset < 0:
+                return (
+                    jsonify({"error": "offset must be greater than or equal to 0"}),
+                    400,
+                )
+
+            end = offset + limit
+
+            filtered_expenses = expenses[offset:end]
+
+            expenses = filtered_expenses
+
+        else:
+            try:
+                limit = int(limit)
+            except ValueError:
+                return jsonify({"error": "limit must be an integer"}), 400
+
+            if limit <= 0:
+                return jsonify({"error": "limit must be greater than 0"}), 400
+
+            filtered_expenses = expenses[0:limit]
+
+            expenses = filtered_expenses
+
+    if limit is None and offset is not None:
+        return jsonify({"error": "limit is required when offset is provided"}), 400
+
     return jsonify(expenses), 200
 
 
@@ -157,9 +204,10 @@ def api_update_expense(expense_id):
     unknown_fields = set(data) - allowed_fields
 
     if unknown_fields:
-        return jsonify(
-            {"error": f"unknown fields: {', '.join(sorted(unknown_fields))}"}
-        ), 400
+        return (
+            jsonify({"error": f"unknown fields: {', '.join(sorted(unknown_fields))}"}),
+            400,
+        )
 
     if "amount" not in data and "category" not in data and "name" not in data:
         return jsonify({"error": "there must be at least one argument"}), 400

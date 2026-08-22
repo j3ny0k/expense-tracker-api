@@ -583,3 +583,180 @@ def test_get_expenses_filter_by_category_and_min_amount(tmp_path, monkeypatch):
             "name": "bread",
         }
     ]
+
+
+def test_get_expenses_limit(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?limit=2")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+    ]
+
+
+def test_get_expenses_limit_and_offset(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?limit=2&offset=1")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        },
+    ]
+
+
+def test_get_expenses_offset_without_limit(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?offset=1")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "limit is required when offset is provided"}
+
+
+def test_get_expenses_limit_zero(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses?limit=0")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "limit must be greater than 0"}
+
+
+def test_get_expenses_limit_negative(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses?limit=-1")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "limit must be greater than 0"}
+
+
+def test_get_expenses_limit_abc(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses?limit=abc")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "limit must be an integer"}
+
+
+def test_get_expenses_offset_negative(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses?limit=2&offset=-1")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "offset must be greater than or equal to 0"}
+
+
+def test_get_expenses_offset_abc(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses?limit=2&offset=abc")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "offset must be an integer"}
+
+
+def test_get_expenses_offset_zero(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?limit=2&offset=0")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+    ]
+
+
+def test_get_expenses_filter_before_pagination(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+    create_expense(400.0, "transport", "taxi")
+
+    response = client.get("/expenses?category=food&limit=1&offset=1")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        }
+    ]
