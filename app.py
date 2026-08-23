@@ -62,6 +62,8 @@ def api_get_expenses():
 
     offset = request.args.get("offset")
 
+    sort = request.args.get("sort")
+
     if category:
         filtered_expenses = []
 
@@ -112,6 +114,26 @@ def api_get_expenses():
                 filtered_expenses.append(e)
 
         expenses = filtered_expenses
+
+    if sort is not None:
+        allowed_sorts = {"amount_desc", "amount_asc"}
+
+        if sort not in allowed_sorts:
+            return jsonify({"error": "unknown sort"}), 400
+
+        if sort == "amount_desc":
+            sorted_expenses = sorted(
+                expenses,
+                key=lambda expense: expense["amount"],
+                reverse=True,
+            )
+
+            expenses = sorted_expenses
+
+        elif sort == "amount_asc":
+            sorted_expenses = sorted(expenses, key=lambda expense: expense["amount"])
+
+            expenses = sorted_expenses
 
     if limit is not None:
         if offset is not None:

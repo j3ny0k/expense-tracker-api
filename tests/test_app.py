@@ -760,3 +760,107 @@ def test_get_expenses_filter_before_pagination(tmp_path, monkeypatch):
             "name": "bread",
         }
     ]
+
+
+def test_get_expenses_sort_amount_desc(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(300.0, "food", "bread")
+    create_expense(200.0, "transport", "bus")
+
+    response = client.get("/expenses?sort=amount_desc")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 2,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        },
+        {
+            "id": 3,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+    ]
+
+
+def test_get_expenses_sort_amount_asc(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(300.0, "food", "bread")
+    create_expense(200.0, "transport", "bus")
+
+    response = client.get("/expenses?sort=amount_asc")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+        {
+            "id": 3,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+        {
+            "id": 2,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        },
+    ]
+
+
+def test_get_expenses_sort_banana(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses?sort=banana")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "unknown sort"}
+
+
+def test_get_expenses_filter_sort_pagination(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(300.0, "food", "bread")
+    create_expense(200.0, "transport", "bus")
+    create_expense(400.0, "transport", "taxi")
+
+    response = client.get(
+        "/expenses?category=transport&sort=amount_asc&limit=1&offset=1"
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 4,
+            "amount": 400.0,
+            "category": "transport",
+            "name": "taxi",
+        }
+    ]
