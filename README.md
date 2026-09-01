@@ -114,7 +114,11 @@ Optional query parameters:
 - `category` — filter expenses by category;
 - `name` — filter expenses by name;
 - `min_amount` — filter expenses with amount greater than or equal to this value;
-- `max_amount` — filter expenses with amount less than or equal to this value.
+- `max_amount` — filter expenses with amount less than or equal to this value;
+- `limit` — maximum number of expenses to return;
+- `offset` — number of expenses to skip; requires `limit`;
+- `sort=amount_asc` — sort expenses by amount from lowest to highest;
+- `sort=amount_desc` — sort expenses by amount from highest to lowest.
 
 Examples:
 
@@ -126,6 +130,10 @@ GET /expenses?min_amount=100
 GET /expenses?max_amount=500
 GET /expenses?min_amount=100&max_amount=500
 GET /expenses?category=food&min_amount=100
+GET /expenses?limit=2
+GET /expenses?limit=2&offset=1
+GET /expenses?sort=amount_asc
+GET /expenses?category=food&sort=amount_desc&limit=2
 ```
 
 When multiple parameters are provided, an expense must match all of the specified filters.
@@ -142,6 +150,16 @@ If `min_amount` is greater than `max_amount`, the request also returns:
 
 ```text
 400 Bad Request
+```
+
+Successful `GET /expenses` responses include the `X-Total-Count` header.
+
+It contains the number of expenses after filtering and before pagination.
+
+Example:
+
+```text
+X-Total-Count: 3
 ```
 
 ---
@@ -390,7 +408,10 @@ The test suite covers:
 - filtering expenses by `category` and `name` query parameters;
 - calculating expense totals by category through `GET /expenses/totals`;
 - finding the largest expense through `GET /expenses/largest`;
-- filtering expenses by `min_amount` and `max_amount` query parameters.
+- filtering expenses by `min_amount` and `max_amount` query parameters;
+- pagination with `limit` and `offset`;
+- sorting expenses by amount;
+- `X-Total-Count` behavior with filters and pagination.
 
 ## Run the tests
 

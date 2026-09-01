@@ -864,3 +864,103 @@ def test_get_expenses_filter_sort_pagination(tmp_path, monkeypatch):
             "name": "taxi",
         }
     ]
+
+
+def test_get_expenses_total_count_with_pagination(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?limit=1")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        }
+    ]
+    assert len(response.get_json()) == 1
+    assert response.headers["X-Total-Count"] == "3"
+
+
+def test_get_expenses_total_count_without_pagination(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        },
+        {
+            "id": 2,
+            "amount": 200.0,
+            "category": "transport",
+            "name": "bus",
+        },
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        },
+    ]
+    assert len(response.get_json()) == 3
+    assert response.headers["X-Total-Count"] == "3"
+
+
+def test_get_expenses_total_count_with_filter_and_pagination(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?category=food&limit=1")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        }
+    ]
+    assert response.get_json()[0].get("category") == "food"
+    assert response.headers["X-Total-Count"] == "2"
+
+
+def test_get_expenses_total_count_empty_result(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "bread")
+
+    response = client.get("/expenses?category=books")
+
+    assert response.status_code == 200
+    assert response.get_json() == []
+    assert response.headers["X-Total-Count"] == "0"

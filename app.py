@@ -58,11 +58,11 @@ def api_get_expenses():
 
     max_amount = request.args.get("max_amount")
 
+    sort = request.args.get("sort")
+
     limit = request.args.get("limit")
 
     offset = request.args.get("offset")
-
-    sort = request.args.get("sort")
 
     if category:
         filtered_expenses = []
@@ -114,6 +114,8 @@ def api_get_expenses():
                 filtered_expenses.append(e)
 
         expenses = filtered_expenses
+
+    total_count = len(expenses)
 
     if sort is not None:
         allowed_sorts = {"amount_desc", "amount_asc"}
@@ -178,7 +180,9 @@ def api_get_expenses():
     if limit is None and offset is not None:
         return jsonify({"error": "limit is required when offset is provided"}), 400
 
-    return jsonify(expenses), 200
+    response = jsonify(expenses)
+    response.headers["X-Total-Count"] = str(total_count)
+    return response, 200
 
 
 @app.get("/expenses/<int:expense_id>")
