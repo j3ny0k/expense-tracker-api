@@ -1,6 +1,7 @@
+import os
 from sqlite3 import connect
 
-DB_NAME = "expenses.db"
+DB_NAME = os.getenv("DATABASE_PATH", "expenses.db")
 
 
 def get_connection():

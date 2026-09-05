@@ -449,11 +449,24 @@ waitress-serve wsgi:app
 
 `wsgi.py` initializes the SQLite database before exposing the Flask application to Waitress.
 
-The default database file is:
+### Database path
+
+By default, the application uses:
 
 ```text
 expenses.db
 ```
+
+The database path can be configured with the `DATABASE_PATH` environment variable.
+
+Example in PowerShell:
+
+```powershell
+$env:DATABASE_PATH = "custom-expenses.db"
+waitress-serve wsgi:app
+```
+
+If `DATABASE_PATH` is not set, the application falls back to `expenses.db`.
 
 ## Project structure
 
