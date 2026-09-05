@@ -37,6 +37,28 @@ expenses (
 
 ## API
 
+### Health check
+
+```http
+GET /health
+```
+
+Returns a simple liveness response without accessing the database.
+
+Successful response:
+
+```text
+200 OK
+```
+
+```json
+{
+  "status": "ok"
+}
+```
+
+---
+
 ### Create an expense
 
 ```http
@@ -411,7 +433,8 @@ The test suite covers:
 - filtering expenses by `min_amount` and `max_amount` query parameters;
 - pagination with `limit` and `offset`;
 - sorting expenses by amount;
-- `X-Total-Count` behavior with filters and pagination.
+- `X-Total-Count` behavior with filters and pagination;
+- liveness check through `GET /health`.
 
 ## Run the tests
 

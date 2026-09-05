@@ -20,6 +20,11 @@ from expense_logic import (
 app = Flask(__name__)
 
 
+@app.get("/health")
+def api_health():
+    return jsonify({"status": "ok"}), 200
+
+
 @app.post("/expenses")
 def api_create_expense():
     data = request.get_json()
