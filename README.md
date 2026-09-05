@@ -429,13 +429,25 @@ Install the dependencies used by the project:
 python -m pip install -r requirements.txt
 ```
 
-Start the application:
+### Development
+
+Start the application with the Flask development server:
 
 ```bash
 python app.py
 ```
 
 The application initializes the SQLite database and starts the Flask development server.
+
+### Production
+
+Start the application with Waitress:
+
+```bash
+waitress-serve wsgi:app
+```
+
+`wsgi.py` initializes the SQLite database before exposing the Flask application to Waitress.
 
 The default database file is:
 
@@ -447,11 +459,15 @@ expenses.db
 
 ```text
 expense-tracker-api/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── app.py
 ├── db.py
 ├── expense_logic.py
 ├── requirements.txt
 ├── README.md
+├── wsgi.py
 └── tests/
     ├── test_app.py
     ├── test_db.py
