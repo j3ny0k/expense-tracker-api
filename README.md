@@ -9,7 +9,8 @@ The project includes:
 - full expense CRUD;
 - partial updates with `PATCH`;
 - HTTP error handling;
-- isolated database and API tests.
+- isolated database and API tests;
+- API key protection for expense endpoints.
 
 ## Expense structure
 
@@ -56,6 +57,47 @@ Successful response:
   "status": "ok"
 }
 ```
+
+---
+
+## API authentication
+
+All `/expenses` endpoints require an API key.
+
+The client must send the key in the `X-API-Key` request header:
+
+```http
+X-API-Key: your-api-key
+```
+
+The server reads the expected key from the `API_KEY` environment variable.
+
+If the header is missing or the key is incorrect, the API returns:
+
+```text
+401 Unauthorized
+```
+
+```json
+{
+  "error": "unauthorized"
+}
+```
+
+`GET /health` does not require an API key.
+
+### Local configuration
+
+Example in PowerShell:
+
+```powershell
+$env:API_KEY = "local-development-key"
+python app.py
+```
+
+For production, configure `API_KEY` as an environment variable on the deployment platform.
+
+Do not store the real production API key in the repository, README, source code, or committed `.env` files.
 
 ---
 
@@ -434,6 +476,7 @@ The test suite covers:
 - pagination with `limit` and `offset`;
 - sorting expenses by amount;
 - `X-Total-Count` behavior with filters and pagination;
+- API key authentication for protected expense endpoints;
 - liveness check through `GET /health`.
 
 ## Run the tests

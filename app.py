@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, jsonify, request
 
 from db import (
@@ -25,8 +27,22 @@ def api_health():
     return jsonify({"status": "ok"}), 200
 
 
+def check_api_key():
+    server_key = os.getenv("API_KEY")
+
+    client_key = request.headers.get("X-API-Key")
+
+    if not server_key or client_key != server_key:
+        return jsonify({"error": "unauthorized"}), 401
+
+
 @app.post("/expenses")
 def api_create_expense():
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
     data = request.get_json()
 
     if not isinstance(data, dict):
@@ -53,6 +69,11 @@ def api_create_expense():
 
 @app.get("/expenses")
 def api_get_expenses():
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
     expenses = get_expenses()
 
     category = request.args.get("category")
@@ -192,6 +213,11 @@ def api_get_expenses():
 
 @app.get("/expenses/<int:expense_id>")
 def api_get_expense_by_id(expense_id):
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
     expense = get_expense_by_id(expense_id)
 
     if expense is None:
@@ -202,6 +228,11 @@ def api_get_expense_by_id(expense_id):
 
 @app.get("/expenses/totals")
 def api_calculate_totals_by_category():
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
     expenses = get_expenses()
 
     totals = calculate_totals_by_category(expenses)
@@ -211,6 +242,11 @@ def api_calculate_totals_by_category():
 
 @app.get("/expenses/largest")
 def api_find_largest_valid_expense():
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
     expenses = get_expenses()
 
     largest = find_largest_valid_expense(expenses)
@@ -220,6 +256,11 @@ def api_find_largest_valid_expense():
 
 @app.patch("/expenses/<int:expense_id>")
 def api_update_expense(expense_id):
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
     expense = get_expense_by_id(expense_id)
 
     if expense is None:
@@ -277,6 +318,11 @@ def api_update_expense(expense_id):
 
 @app.delete("/expenses/<int:expense_id>")
 def api_delete_expense(expense_id):
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
     if delete_expense(expense_id) is False:
         return jsonify({"error": "expense not found"}), 404
 
@@ -285,6 +331,11 @@ def api_delete_expense(expense_id):
 
 @app.delete("/expenses")
 def api_delete_expenses():
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
     delete_expenses()
     return "", 204
 

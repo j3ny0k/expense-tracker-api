@@ -1,18 +1,28 @@
 from app import app
 from db import create_expense, init_db
 
+TEST_API_KEY = "test-api-key"
+
 
 def init_db_for_test(tmp_path, monkeypatch):
+    monkeypatch.setenv("API_KEY", TEST_API_KEY)
+
     test_db = tmp_path / "expenses.db"
     monkeypatch.setattr("db.DB_NAME", test_db)
 
     init_db()
 
 
+def create_test_client():
+    client = app.test_client()
+    client.environ_base["HTTP_X_API_KEY"] = TEST_API_KEY
+    return client
+
+
 def test_get_expenses_empty(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses")
 
@@ -23,7 +33,7 @@ def test_get_expenses_empty(tmp_path, monkeypatch):
 def test_get_expense_undefined_id(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses/1")
 
@@ -34,7 +44,7 @@ def test_get_expense_undefined_id(tmp_path, monkeypatch):
 def test_get_expense_1(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -52,7 +62,7 @@ def test_get_expense_1(tmp_path, monkeypatch):
 def test_post_expense(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.post(
         "/expenses",
@@ -75,7 +85,7 @@ def test_post_expense(tmp_path, monkeypatch):
 def test_post_expense_without_amount(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.post(
         "/expenses",
@@ -92,7 +102,7 @@ def test_post_expense_without_amount(tmp_path, monkeypatch):
 def test_post_expense_without_category(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.post(
         "/expenses",
@@ -109,7 +119,7 @@ def test_post_expense_without_category(tmp_path, monkeypatch):
 def test_post_expense_without_name(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.post(
         "/expenses",
@@ -126,7 +136,7 @@ def test_post_expense_without_name(tmp_path, monkeypatch):
 def test_patch_amount(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -149,7 +159,7 @@ def test_patch_amount(tmp_path, monkeypatch):
 def test_patch_amount_unknown_fields(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -170,7 +180,7 @@ def test_patch_amount_unknown_fields(tmp_path, monkeypatch):
 def test_patch_expense_empty_request(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -186,7 +196,7 @@ def test_patch_expense_empty_request(tmp_path, monkeypatch):
 def test_patch_amount_undefined_id(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.patch(
         "/expenses/999",
@@ -204,7 +214,7 @@ def test_patch_amount_undefined_id(tmp_path, monkeypatch):
 def test_delete_expense(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -216,7 +226,7 @@ def test_delete_expense(tmp_path, monkeypatch):
 def test_delete_expense_2_times(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -230,7 +240,7 @@ def test_delete_expense_2_times(tmp_path, monkeypatch):
 def test_delete_expenses(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -247,7 +257,7 @@ def test_delete_expenses(tmp_path, monkeypatch):
 def test_get_expenses(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -281,7 +291,7 @@ def test_get_expenses(tmp_path, monkeypatch):
 def test_get_expenses_filter_by_category(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -309,7 +319,7 @@ def test_get_expenses_filter_by_category(tmp_path, monkeypatch):
 def test_get_expenses_filter_by_name(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -331,7 +341,7 @@ def test_get_expenses_filter_by_name(tmp_path, monkeypatch):
 def test_get_expenses_filter_by_category_and_name(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -354,7 +364,7 @@ def test_get_expenses_filter_by_category_and_name(tmp_path, monkeypatch):
 def test_calculate_totals_by_category(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -370,7 +380,7 @@ def test_calculate_totals_by_category(tmp_path, monkeypatch):
 def test_calculate_totals_by_category_empty(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses/totals")
 
@@ -381,7 +391,7 @@ def test_calculate_totals_by_category_empty(tmp_path, monkeypatch):
 def test_find_largest_valid_expense(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -400,7 +410,7 @@ def test_find_largest_valid_expense(tmp_path, monkeypatch):
 def test_find_largest_valid_expense_empty(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses/largest")
 
@@ -411,7 +421,7 @@ def test_find_largest_valid_expense_empty(tmp_path, monkeypatch):
 def test_min_amount(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -439,7 +449,7 @@ def test_min_amount(tmp_path, monkeypatch):
 def test_max_amount(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -467,7 +477,7 @@ def test_max_amount(tmp_path, monkeypatch):
 def test_min_and_max_amount(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -489,7 +499,7 @@ def test_min_and_max_amount(tmp_path, monkeypatch):
 def test_min_amount_error(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -502,7 +512,7 @@ def test_min_amount_error(tmp_path, monkeypatch):
 def test_max_amount_error(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
 
@@ -515,7 +525,7 @@ def test_max_amount_error(tmp_path, monkeypatch):
 def test_min_and_max_amount_error(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -532,7 +542,7 @@ def test_min_and_max_amount_error(tmp_path, monkeypatch):
 def test_min_amount0(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -566,7 +576,7 @@ def test_min_amount0(tmp_path, monkeypatch):
 def test_get_expenses_filter_by_category_and_min_amount(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -588,7 +598,7 @@ def test_get_expenses_filter_by_category_and_min_amount(tmp_path, monkeypatch):
 def test_get_expenses_limit(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -616,7 +626,7 @@ def test_get_expenses_limit(tmp_path, monkeypatch):
 def test_get_expenses_limit_and_offset(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -644,7 +654,7 @@ def test_get_expenses_limit_and_offset(tmp_path, monkeypatch):
 def test_get_expenses_offset_without_limit(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -659,7 +669,7 @@ def test_get_expenses_offset_without_limit(tmp_path, monkeypatch):
 def test_get_expenses_limit_zero(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses?limit=0")
 
@@ -670,7 +680,7 @@ def test_get_expenses_limit_zero(tmp_path, monkeypatch):
 def test_get_expenses_limit_negative(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses?limit=-1")
 
@@ -681,7 +691,7 @@ def test_get_expenses_limit_negative(tmp_path, monkeypatch):
 def test_get_expenses_limit_abc(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses?limit=abc")
 
@@ -692,7 +702,7 @@ def test_get_expenses_limit_abc(tmp_path, monkeypatch):
 def test_get_expenses_offset_negative(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses?limit=2&offset=-1")
 
@@ -703,7 +713,7 @@ def test_get_expenses_offset_negative(tmp_path, monkeypatch):
 def test_get_expenses_offset_abc(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses?limit=2&offset=abc")
 
@@ -714,7 +724,7 @@ def test_get_expenses_offset_abc(tmp_path, monkeypatch):
 def test_get_expenses_offset_zero(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -742,7 +752,7 @@ def test_get_expenses_offset_zero(tmp_path, monkeypatch):
 def test_get_expenses_filter_before_pagination(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -765,7 +775,7 @@ def test_get_expenses_filter_before_pagination(tmp_path, monkeypatch):
 def test_get_expenses_sort_amount_desc(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(300.0, "food", "bread")
@@ -799,7 +809,7 @@ def test_get_expenses_sort_amount_desc(tmp_path, monkeypatch):
 def test_get_expenses_sort_amount_asc(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(300.0, "food", "bread")
@@ -833,7 +843,7 @@ def test_get_expenses_sort_amount_asc(tmp_path, monkeypatch):
 def test_get_expenses_sort_banana(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     response = client.get("/expenses?sort=banana")
 
@@ -844,7 +854,7 @@ def test_get_expenses_sort_banana(tmp_path, monkeypatch):
 def test_get_expenses_filter_sort_pagination(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(300.0, "food", "bread")
@@ -869,7 +879,7 @@ def test_get_expenses_filter_sort_pagination(tmp_path, monkeypatch):
 def test_get_expenses_total_count_with_pagination(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -893,7 +903,7 @@ def test_get_expenses_total_count_with_pagination(tmp_path, monkeypatch):
 def test_get_expenses_total_count_without_pagination(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -929,7 +939,7 @@ def test_get_expenses_total_count_without_pagination(tmp_path, monkeypatch):
 def test_get_expenses_total_count_with_filter_and_pagination(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -953,7 +963,7 @@ def test_get_expenses_total_count_with_filter_and_pagination(tmp_path, monkeypat
 def test_get_expenses_total_count_empty_result(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
-    client = app.test_client()
+    client = create_test_client()
 
     create_expense(100.0, "food", "pizza")
     create_expense(200.0, "transport", "bus")
@@ -964,6 +974,57 @@ def test_get_expenses_total_count_empty_result(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert response.get_json() == []
     assert response.headers["X-Total-Count"] == "0"
+
+
+def test_expenses_without_server_api_key(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    monkeypatch.delenv("API_KEY", raising=False)
+
+    client = app.test_client()
+
+    response = client.get(
+        "/expenses",
+        headers={"X-API-Key": TEST_API_KEY},
+    )
+
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "unauthorized"}
+
+
+def test_expenses_without_client_api_key(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses")
+
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "unauthorized"}
+
+
+def test_expenses_with_wrong_api_key(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get(
+        "/expenses",
+        headers={"X-API-Key": "wrong-test-api-key"},
+    )
+
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "unauthorized"}
+
+
+def test_expenses_with_correct_api_key(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses")
+
+    assert response.status_code == 200
+    assert response.get_json() == []
 
 
 def test_health():
