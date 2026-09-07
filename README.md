@@ -487,6 +487,28 @@ From the project directory:
 python -m pytest -q
 ```
 
+## Run the smoke test
+
+The smoke test checks a running deployment through HTTP.
+
+It verifies:
+
+- public `GET /health`;
+- `401 Unauthorized` for `GET /expenses` without an API key;
+- authenticated expense creation;
+- reading the created expense by its ID;
+- deleting only the expense created by the smoke test.
+
+The smoke test reads its target and API key from the `SMOKE_BASE_URL` and `API_KEY` environment variables.
+
+Set both variables in your shell, then run:
+
+```bash
+python smoke.py
+```
+
+The script does not use bulk deletion. If a failure happens after creating the test expense, it attempts to delete only that expense.
+
 ## Run the API
 
 Install the dependencies used by the project:
@@ -546,6 +568,7 @@ expense-tracker-api/
 ├── expense_logic.py
 ├── requirements.txt
 ├── README.md
+├── smoke.py
 ├── wsgi.py
 └── tests/
     ├── test_app.py
