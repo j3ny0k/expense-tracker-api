@@ -1034,3 +1034,27 @@ def test_health():
 
     assert response.status_code == 200
     assert response.get_json() == {"status": "ok"}
+
+
+def test_post_expense_without_body(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.post("/expenses")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "JSON object is required"}
+
+
+def test_patch_expense_without_json(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "pizza")
+
+    response = client.patch("/expenses/1")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "JSON object is required"}

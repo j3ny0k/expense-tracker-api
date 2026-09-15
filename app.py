@@ -43,7 +43,7 @@ def api_create_expense():
     if auth_error is not None:
         return auth_error
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     if not isinstance(data, dict):
         return jsonify({"error": "JSON object is required"}), 400
@@ -266,7 +266,7 @@ def api_update_expense(expense_id):
     if expense is None:
         return jsonify({"error": "expense not found"}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     if not isinstance(data, dict):
         return jsonify({"error": "JSON object is required"}), 400
