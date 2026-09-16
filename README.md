@@ -1,16 +1,17 @@
 # Expense Tracker API
 
-A small REST API for managing expenses, built with **Python, Flask, SQLite, and pytest**.
+A REST API for managing expenses, built with **Python, Flask, SQLite, pytest, and Waitress**.
 
-The project includes:
+The project demonstrates an end-to-end backend workflow:
 
-- expense validation;
-- SQLite persistence;
-- full expense CRUD;
-- partial updates with `PATCH`;
-- HTTP error handling;
-- isolated database and API tests;
-- API key protection for expense endpoints.
+- authenticated expense CRUD with `X-API-Key`;
+- filtering, sorting, pagination, aggregates, and `X-Total-Count`;
+- input validation and controlled HTTP errors;
+- configurable SQLite persistence through `DATABASE_PATH`;
+- 87 automated tests covering API, database, and business logic;
+- GitHub Actions CI;
+- production-style startup with Waitress;
+- HTTP smoke testing for health, authentication, create/read/delete, and cleanup.
 
 ## Expense structure
 
