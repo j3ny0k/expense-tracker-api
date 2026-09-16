@@ -1,3 +1,4 @@
+import math
 import os
 
 from flask import Flask, jsonify, request
@@ -111,12 +112,18 @@ def api_get_expenses():
     if min_amount is not None:
         try:
             min_amount = float(min_amount)
+
+            if not math.isfinite(float(min_amount)):
+                return jsonify({"error": "amount is required"}), 400
         except ValueError:
             return jsonify({"error": "amount is required"}), 400
 
     if max_amount is not None:
         try:
             max_amount = float(max_amount)
+
+            if not math.isfinite(float(max_amount)):
+                return jsonify({"error": "amount is required"}), 400
         except ValueError:
             return jsonify({"error": "amount is required"}), 400
 

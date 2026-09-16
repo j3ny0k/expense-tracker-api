@@ -573,6 +573,28 @@ def test_min_amount0(tmp_path, monkeypatch):
     ]
 
 
+def test_min_amount_non_finite(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses?min_amount=nan")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "amount is required"}
+
+
+def test_max_amount_non_finite(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses?max_amount=inf")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "amount is required"}
+
+
 def test_get_expenses_filter_by_category_and_min_amount(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
