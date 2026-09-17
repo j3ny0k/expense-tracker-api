@@ -104,15 +104,7 @@ def api_get_expenses():
     if min_amount is not None and max_amount is not None and min_amount > max_amount:
         return jsonify({"error": "max amount must be greater than min amount"}), 400
 
-    expenses = get_expenses(category, name, min_amount, max_amount)
-
     sort = request.args.get("sort")
-
-    limit = request.args.get("limit")
-
-    offset = request.args.get("offset")
-
-    total_count = len(expenses)
 
     if sort is not None:
         allowed_sorts = {"amount_desc", "amount_asc"}
@@ -120,19 +112,13 @@ def api_get_expenses():
         if sort not in allowed_sorts:
             return jsonify({"error": "unknown sort"}), 400
 
-        if sort == "amount_desc":
-            sorted_expenses = sorted(
-                expenses,
-                key=lambda expense: expense["amount"],
-                reverse=True,
-            )
+    expenses = get_expenses(category, name, min_amount, max_amount, sort)
 
-            expenses = sorted_expenses
+    limit = request.args.get("limit")
 
-        elif sort == "amount_asc":
-            sorted_expenses = sorted(expenses, key=lambda expense: expense["amount"])
+    offset = request.args.get("offset")
 
-            expenses = sorted_expenses
+    total_count = len(expenses)
 
     if limit is not None:
         if offset is not None:

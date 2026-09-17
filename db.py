@@ -42,7 +42,7 @@ def create_expense(amount, category, name):
     return expense_id
 
 
-def get_expenses(category=None, name=None, min_amount=None, max_amount=None):
+def get_expenses(category=None, name=None, min_amount=None, max_amount=None, sort=None):
     connection = get_connection()
 
     conditions = []
@@ -69,7 +69,12 @@ def get_expenses(category=None, name=None, min_amount=None, max_amount=None):
     if conditions:
         sql += " WHERE " + " AND ".join(conditions)
 
-    sql += " ORDER BY id ASC"
+    if sort == "amount_asc":
+        sql += " ORDER BY amount ASC"
+    elif sort == "amount_desc":
+        sql += " ORDER BY amount DESC"
+    else:
+        sql += " ORDER BY id ASC"
 
     cursor = connection.execute(sql, params)
 
