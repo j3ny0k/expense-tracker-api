@@ -42,12 +42,36 @@ def create_expense(amount, category, name):
     return expense_id
 
 
-def get_expenses():
+def get_expenses(category=None, name=None, min_amount=None, max_amount=None):
     connection = get_connection()
 
-    cursor = connection.execute(
-        "SELECT id, amount, category, name FROM expenses ORDER BY id ASC"
-    )
+    conditions = []
+    params = []
+
+    if category is not None:
+        conditions.append("category = ?")
+        params.append(category)
+
+    if name is not None:
+        conditions.append("name = ?")
+        params.append(name)
+
+    if min_amount is not None:
+        conditions.append("amount >= ?")
+        params.append(min_amount)
+
+    if max_amount is not None:
+        conditions.append("amount <= ?")
+        params.append(max_amount)
+
+    sql = "SELECT id, amount, category, name FROM expenses"
+
+    if conditions:
+        sql += " WHERE " + " AND ".join(conditions)
+
+    sql += " ORDER BY id ASC"
+
+    cursor = connection.execute(sql, params)
 
     expenses = []
 

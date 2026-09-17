@@ -75,8 +75,6 @@ def api_get_expenses():
     if auth_error is not None:
         return auth_error
 
-    expenses = get_expenses()
-
     category = request.args.get("category")
 
     name = request.args.get("name")
@@ -85,35 +83,11 @@ def api_get_expenses():
 
     max_amount = request.args.get("max_amount")
 
-    sort = request.args.get("sort")
-
-    limit = request.args.get("limit")
-
-    offset = request.args.get("offset")
-
-    if category:
-        filtered_expenses = []
-
-        for e in expenses:
-            if e["category"] == category:
-                filtered_expenses.append(e)
-
-        expenses = filtered_expenses
-
-    if name:
-        filtered_expenses = []
-
-        for e in expenses:
-            if e["name"] == name:
-                filtered_expenses.append(e)
-
-        expenses = filtered_expenses
-
     if min_amount is not None:
         try:
             min_amount = float(min_amount)
 
-            if not math.isfinite(float(min_amount)):
+            if not math.isfinite(min_amount):
                 return jsonify({"error": "amount is required"}), 400
         except ValueError:
             return jsonify({"error": "amount is required"}), 400
@@ -122,7 +96,7 @@ def api_get_expenses():
         try:
             max_amount = float(max_amount)
 
-            if not math.isfinite(float(max_amount)):
+            if not math.isfinite(max_amount):
                 return jsonify({"error": "amount is required"}), 400
         except ValueError:
             return jsonify({"error": "amount is required"}), 400
@@ -130,23 +104,13 @@ def api_get_expenses():
     if min_amount is not None and max_amount is not None and min_amount > max_amount:
         return jsonify({"error": "max amount must be greater than min amount"}), 400
 
-    if min_amount is not None:
-        filtered_expenses = []
+    expenses = get_expenses(category, name, min_amount, max_amount)
 
-        for e in expenses:
-            if e["amount"] >= min_amount:
-                filtered_expenses.append(e)
+    sort = request.args.get("sort")
 
-        expenses = filtered_expenses
+    limit = request.args.get("limit")
 
-    if max_amount is not None:
-        filtered_expenses = []
-
-        for e in expenses:
-            if e["amount"] <= max_amount:
-                filtered_expenses.append(e)
-
-        expenses = filtered_expenses
+    offset = request.args.get("offset")
 
     total_count = len(expenses)
 

@@ -8,7 +8,7 @@ The project demonstrates an end-to-end backend workflow:
 - filtering, sorting, pagination, aggregates, and `X-Total-Count`;
 - input validation and controlled HTTP errors;
 - configurable SQLite persistence through `DATABASE_PATH`;
-- 87 automated tests covering API, database, and business logic;
+- 88 automated tests covering API, database, and business logic;
 - GitHub Actions CI;
 - production-style startup with Waitress;
 - HTTP smoke testing for health, authentication, create/read/delete, and cleanup.

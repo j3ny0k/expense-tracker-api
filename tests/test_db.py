@@ -321,3 +321,24 @@ def test_delete_expense_double_is_false(tmp_path, monkeypatch):
     result = delete_expense(1)
 
     assert result is False
+
+
+def test_get_expenses_filter_by_category(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+
+    result = get_expenses("food")
+
+    assert result == [
+        {
+            "id": 1,
+            "amount": 100.0,
+            "category": "food",
+            "name": "pizza",
+        }
+    ]
