@@ -4,6 +4,7 @@ import os
 from flask import Flask, jsonify, request
 
 from db import (
+    count_expenses,
     create_expense,
     delete_expense,
     delete_expenses,
@@ -112,56 +113,41 @@ def api_get_expenses():
         if sort not in allowed_sorts:
             return jsonify({"error": "unknown sort"}), 400
 
-    expenses = get_expenses(category, name, min_amount, max_amount, sort)
-
     limit = request.args.get("limit")
-
     offset = request.args.get("offset")
 
-    total_count = len(expenses)
-
     if limit is not None:
-        if offset is not None:
-            try:
-                limit = int(limit)
-            except ValueError:
-                return jsonify({"error": "limit must be an integer"}), 400
+        try:
+            limit = int(limit)
+        except ValueError:
+            return jsonify({"error": "limit must be an integer"}), 400
 
-            if limit <= 0:
-                return jsonify({"error": "limit must be greater than 0"}), 400
+        if limit <= 0:
+            return jsonify({"error": "limit must be greater than 0"}), 400
 
-            try:
-                offset = int(offset)
-            except ValueError:
-                return jsonify({"error": "offset must be an integer"}), 400
+    if offset is not None:
+        if limit is None:
+            return jsonify({"error": "limit is required when offset is provided"}), 400
 
-            if offset < 0:
-                return (
-                    jsonify({"error": "offset must be greater than or equal to 0"}),
-                    400,
-                )
+        try:
+            offset = int(offset)
+        except ValueError:
+            return jsonify({"error": "offset must be an integer"}), 400
 
-            end = offset + limit
+        if offset < 0:
+            return jsonify({"error": "offset must be greater than or equal to 0"}), 400
 
-            filtered_expenses = expenses[offset:end]
+    total_count = count_expenses(category, name, min_amount, max_amount)
 
-            expenses = filtered_expenses
-
-        else:
-            try:
-                limit = int(limit)
-            except ValueError:
-                return jsonify({"error": "limit must be an integer"}), 400
-
-            if limit <= 0:
-                return jsonify({"error": "limit must be greater than 0"}), 400
-
-            filtered_expenses = expenses[0:limit]
-
-            expenses = filtered_expenses
-
-    if limit is None and offset is not None:
-        return jsonify({"error": "limit is required when offset is provided"}), 400
+    expenses = get_expenses(
+        category,
+        name,
+        min_amount,
+        max_amount,
+        sort,
+        limit,
+        offset,
+    )
 
     response = jsonify(expenses)
     response.headers["X-Total-Count"] = str(total_count)

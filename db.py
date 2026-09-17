@@ -42,7 +42,15 @@ def create_expense(amount, category, name):
     return expense_id
 
 
-def get_expenses(category=None, name=None, min_amount=None, max_amount=None, sort=None):
+def get_expenses(
+    category=None,
+    name=None,
+    min_amount=None,
+    max_amount=None,
+    sort=None,
+    limit=None,
+    offset=None,
+):
     connection = get_connection()
 
     conditions = []
@@ -75,6 +83,14 @@ def get_expenses(category=None, name=None, min_amount=None, max_amount=None, sor
         sql += " ORDER BY amount DESC"
     else:
         sql += " ORDER BY id ASC"
+
+    if limit is not None:
+        sql += " LIMIT ?"
+        params.append(limit)
+
+        if offset is not None:
+            sql += " OFFSET ?"
+            params.append(offset)
 
     cursor = connection.execute(sql, params)
 
@@ -175,3 +191,37 @@ def delete_expenses():
     connection.close()
 
     return True
+
+
+def count_expenses(category=None, name=None, min_amount=None, max_amount=None):
+    connection = get_connection()
+
+    conditions = []
+    params = []
+
+    if category is not None:
+        conditions.append("category = ?")
+        params.append(category)
+
+    if name is not None:
+        conditions.append("name = ?")
+        params.append(name)
+
+    if min_amount is not None:
+        conditions.append("amount >= ?")
+        params.append(min_amount)
+
+    if max_amount is not None:
+        conditions.append("amount <= ?")
+        params.append(max_amount)
+
+    sql = "SELECT COUNT(*) FROM expenses"
+
+    if conditions:
+        sql += " WHERE " + " AND ".join(conditions)
+
+    total_count = connection.execute(sql, params).fetchone()[0]
+
+    connection.close()
+
+    return total_count
