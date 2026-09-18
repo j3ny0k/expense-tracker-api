@@ -11,11 +11,11 @@ from db import (
     delete_expenses,
     get_expense_by_id,
     get_expenses,
+    get_largest_expense,
     init_db,
     update_expense,
 )
 from expense_logic import (
-    find_largest_valid_expense,
     validate_amount,
     validate_category,
     validate_name,
@@ -188,9 +188,7 @@ def api_find_largest_valid_expense():
     if auth_error is not None:
         return auth_error
 
-    expenses = get_expenses()
-
-    largest = find_largest_valid_expense(expenses)
+    largest = get_largest_expense()
 
     return jsonify(largest), 200
 

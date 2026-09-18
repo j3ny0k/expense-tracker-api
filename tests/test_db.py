@@ -5,10 +5,10 @@ from db import (
     get_connection,
     get_expense_by_id,
     get_expenses,
+    get_largest_expense,
     init_db,
     update_expense,
 )
-from expense_logic import find_largest_valid_expense
 
 
 def test_init_db(tmp_path, monkeypatch):
@@ -154,7 +154,7 @@ def test_calculate_totals_by_category_empty(tmp_path, monkeypatch):
     assert result == {}
 
 
-def test_find_largest_valid_expense(tmp_path, monkeypatch):
+def test_get_largest_expense(tmp_path, monkeypatch):
     test_db = tmp_path / "expenses.db"
     monkeypatch.setattr("db.DB_NAME", test_db)
 
@@ -164,24 +164,35 @@ def test_find_largest_valid_expense(tmp_path, monkeypatch):
     create_expense(200.0, "food", "bread")
     create_expense(300.0, "transport", "road")
 
-    expenses = get_expenses()
-
-    result = find_largest_valid_expense(expenses)
+    result = get_largest_expense()
 
     assert result == {"id": 3, "amount": 300.0, "category": "transport", "name": "road"}
 
 
-def test_find_largest_valid_expense_empty(tmp_path, monkeypatch):
+def test_get_largest_expense_empty(tmp_path, monkeypatch):
     test_db = tmp_path / "expenses.db"
     monkeypatch.setattr("db.DB_NAME", test_db)
 
     init_db()
 
-    expenses = get_expenses()
-
-    result = find_largest_valid_expense(expenses)
+    result = get_largest_expense()
 
     assert result is None
+
+
+def test_get_largest_expense_tie(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    create_expense(200.0, "food", "pizza")
+    create_expense(200.0, "food", "bread")
+    create_expense(100.0, "transport", "road")
+
+    result = get_largest_expense()
+
+    assert result == {"id": 1, "amount": 200.0, "category": "food", "name": "pizza"}
 
 
 def test_get_expense_by_id(tmp_path, monkeypatch):

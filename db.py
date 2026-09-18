@@ -156,6 +156,30 @@ def calculate_totals_by_category():
     return totals
 
 
+def get_largest_expense():
+    connection = get_connection()
+
+    cursor = connection.execute(
+        "SELECT id, amount, category, name FROM expenses ORDER BY amount DESC, id ASC LIMIT 1"
+    )
+
+    raw = cursor.fetchone()
+
+    largest = None
+
+    if raw is not None:
+        largest = {}
+
+        largest["id"] = raw[0]
+        largest["amount"] = raw[1]
+        largest["category"] = raw[2]
+        largest["name"] = raw[3]
+
+    connection.close()
+
+    return largest
+
+
 def update_expense(expense_id, amount, category, name):
     connection = get_connection()
 
