@@ -8,6 +8,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      API_KEY: ci-test-key
+      SMOKE_BASE_URL: http://127.0.0.1:8000
+
     steps:
       - uses: actions/checkout@v6
 
@@ -21,3 +25,12 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -q
+
+      - name: Start API
+        run: waitress-serve --listen=127.0.0.1:8000 wsgi:app &
+
+      - name: Wait for API
+        run: curl --retry 10 --retry-delay 1 --retry-connrefused http://127.0.0.1:8000/health
+
+      - name: Run smoke test
+        run: python smoke.py
