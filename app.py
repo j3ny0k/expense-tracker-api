@@ -4,6 +4,7 @@ import os
 from flask import Flask, jsonify, request
 
 from db import (
+    calculate_totals_by_category,
     count_expenses,
     create_expense,
     delete_expense,
@@ -14,7 +15,6 @@ from db import (
     update_expense,
 )
 from expense_logic import (
-    calculate_totals_by_category,
     find_largest_valid_expense,
     validate_amount,
     validate_category,
@@ -176,9 +176,7 @@ def api_calculate_totals_by_category():
     if auth_error is not None:
         return auth_error
 
-    expenses = get_expenses()
-
-    totals = calculate_totals_by_category(expenses)
+    totals = calculate_totals_by_category()
 
     return jsonify(totals), 200
 

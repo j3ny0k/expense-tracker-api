@@ -1,4 +1,5 @@
 from db import (
+    calculate_totals_by_category,
     create_expense,
     delete_expense,
     get_connection,
@@ -7,7 +8,7 @@ from db import (
     init_db,
     update_expense,
 )
-from expense_logic import calculate_totals_by_category, find_largest_valid_expense
+from expense_logic import find_largest_valid_expense
 
 
 def test_init_db(tmp_path, monkeypatch):
@@ -137,9 +138,7 @@ def test_calculate_totals_by_category(tmp_path, monkeypatch):
     create_expense(200.0, "food", "bread")
     create_expense(300.0, "transport", "road")
 
-    expenses = get_expenses()
-
-    result = calculate_totals_by_category(expenses)
+    result = calculate_totals_by_category()
 
     assert result == {"food": 300.0, "transport": 300.0}
 
@@ -150,9 +149,7 @@ def test_calculate_totals_by_category_empty(tmp_path, monkeypatch):
 
     init_db()
 
-    expenses = get_expenses()
-
-    result = calculate_totals_by_category(expenses)
+    result = calculate_totals_by_category()
 
     assert result == {}
 

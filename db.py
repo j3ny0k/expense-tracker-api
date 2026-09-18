@@ -137,6 +137,25 @@ def get_expense_by_id(expense_id):
     return expense
 
 
+def calculate_totals_by_category():
+    connection = get_connection()
+
+    cursor = connection.execute(
+        "SELECT category, SUM(amount) FROM expenses GROUP BY category"
+    )
+
+    raw = cursor.fetchall()
+
+    totals = {}
+
+    for category, amount in raw:
+        totals[category] = amount
+
+    connection.close()
+
+    return totals
+
+
 def update_expense(expense_id, amount, category, name):
     connection = get_connection()
 

@@ -18,22 +18,6 @@ def validate_name(expense):
     return isinstance(name, str) and name.strip() != ""
 
 
-def calculate_totals_by_category(expenses):
-    result = {}
-
-    for e in expenses:
-        if validate_amount(e) and validate_category(e):
-            amount = e.get("amount")
-            category = e.get("category").strip()
-
-            if category not in result:
-                result[category] = 0
-
-            result[category] += amount
-
-    return result
-
-
 def find_largest_valid_expense(expenses):
     result = None
 
