@@ -5,13 +5,17 @@ A REST API for managing expenses, built with **Python, Flask, SQLite, pytest, an
 The project demonstrates an end-to-end backend workflow:
 
 - authenticated expense CRUD with `X-API-Key`;
-- filtering, sorting, pagination, aggregates, and `X-Total-Count`;
+- filtering by category, name, and amount;
+- sorting and pagination;
+- `X-Total-Count` metadata;
+- SQL aggregation for totals by category;
+- SQL query for the largest expense;
 - input validation and controlled HTTP errors;
 - configurable SQLite persistence through `DATABASE_PATH`;
-- 88 automated tests covering API, database, and business logic;
+- 77 automated API and database tests;
 - GitHub Actions CI;
 - production-style startup with Waitress;
-- HTTP smoke testing for health, authentication, create/read/delete, and cleanup.
+- HTTP smoke testing.
 
 ## Expense structure
 
@@ -37,15 +41,17 @@ expenses (
 )
 ```
 
-## API
+---
 
-### Health check
+# API
+
+## Health check
 
 ```http
 GET /health
 ```
 
-Returns a simple liveness response without accessing the database.
+The health endpoint is public and does not require an API key.
 
 Successful response:
 
@@ -61,11 +67,11 @@ Successful response:
 
 ---
 
-## API authentication
+## Authentication
 
 All `/expenses` endpoints require an API key.
 
-The client must send the key in the `X-API-Key` request header:
+The client must send it using the `X-API-Key` header:
 
 ```http
 X-API-Key: your-api-key
@@ -73,7 +79,7 @@ X-API-Key: your-api-key
 
 The server reads the expected key from the `API_KEY` environment variable.
 
-If the header is missing or the key is incorrect, the API returns:
+If the server key is missing, the client key is missing, or the key is incorrect:
 
 ```text
 401 Unauthorized
@@ -85,24 +91,17 @@ If the header is missing or the key is incorrect, the API returns:
 }
 ```
 
-`GET /health` does not require an API key.
-
-### Local configuration
-
-Example in PowerShell:
+Example PowerShell configuration:
 
 ```powershell
 $env:API_KEY = "local-development-key"
-python app.py
 ```
 
-For production, configure `API_KEY` as an environment variable on the deployment platform.
-
-Do not store the real production API key in the repository, README, source code, or committed `.env` files.
+Do not store real API keys in the repository, README, source code, or committed `.env` files.
 
 ---
 
-### Create an expense
+## Create an expense
 
 ```http
 POST /expenses
@@ -133,7 +132,11 @@ Successful response:
 }
 ```
 
-`amount`, `category`, and `name` are required.
+Required fields:
+
+- `amount`;
+- `category`;
+- `name`.
 
 Invalid input returns:
 
@@ -143,7 +146,7 @@ Invalid input returns:
 
 ---
 
-### Get all expenses
+## Get expenses
 
 ```http
 GET /expenses
@@ -174,62 +177,115 @@ An empty database returns:
 []
 ```
 
-Optional query parameters:
+### Filters
 
-- `category` — filter expenses by category;
-- `name` — filter expenses by name;
-- `min_amount` — filter expenses with amount greater than or equal to this value;
-- `max_amount` — filter expenses with amount less than or equal to this value;
-- `limit` — maximum number of expenses to return;
-- `offset` — number of expenses to skip; requires `limit`;
-- `sort=amount_asc` — sort expenses by amount from lowest to highest;
-- `sort=amount_desc` — sort expenses by amount from highest to lowest.
+Supported query parameters:
+
+- `category` — exact category filter;
+- `name` — exact name filter;
+- `min_amount` — minimum amount;
+- `max_amount` — maximum amount.
 
 Examples:
 
 ```http
 GET /expenses?category=food
 GET /expenses?name=pizza
-GET /expenses?category=food&name=pizza
 GET /expenses?min_amount=100
 GET /expenses?max_amount=500
 GET /expenses?min_amount=100&max_amount=500
 GET /expenses?category=food&min_amount=100
+```
+
+When multiple filters are provided, an expense must match all of them.
+
+`min_amount` and `max_amount` must be valid finite numbers.
+
+If `min_amount` is greater than `max_amount`, the API returns:
+
+```text
+400 Bad Request
+```
+
+### Sorting
+
+Supported values:
+
+```text
+sort=amount_asc
+sort=amount_desc
+```
+
+Examples:
+
+```http
+GET /expenses?sort=amount_asc
+GET /expenses?sort=amount_desc
+```
+
+`amount_asc` sorts from the smallest amount to the largest.
+
+`amount_desc` sorts from the largest amount to the smallest.
+
+Unknown sort values return:
+
+```text
+400 Bad Request
+```
+
+### Pagination
+
+Supported parameters:
+
+- `limit` — maximum number of expenses to return;
+- `offset` — number of matching expenses to skip.
+
+Examples:
+
+```http
 GET /expenses?limit=2
 GET /expenses?limit=2&offset=1
-GET /expenses?sort=amount_asc
-GET /expenses?category=food&sort=amount_desc&limit=2
 ```
 
-When multiple parameters are provided, an expense must match all of the specified filters.
+`limit` must be greater than `0`.
 
-`min_amount` and `max_amount` must be valid numbers.
+`offset` must be greater than or equal to `0`.
 
-Invalid amount filters return:
+`offset` can only be used together with `limit`.
+
+Filtering, sorting, and pagination can be combined:
+
+```http
+GET /expenses?category=food&sort=amount_desc&limit=2&offset=1
+```
+
+### X-Total-Count
+
+Successful `GET /expenses` responses include:
 
 ```text
-400 Bad Request
+X-Total-Count
 ```
 
-If `min_amount` is greater than `max_amount`, the request also returns:
-
-```text
-400 Bad Request
-```
-
-Successful `GET /expenses` responses include the `X-Total-Count` header.
-
-It contains the number of expenses after filtering and before pagination.
+The header contains the total number of matching expenses **after filtering but before pagination**.
 
 Example:
 
 ```text
-X-Total-Count: 3
+X-Total-Count: 4
 ```
+
+A request such as:
+
+```http
+GET /expenses?category=food&limit=1
+```
+
+may therefore return one JSON object while `X-Total-Count` reports several matching expenses.
 
 ---
 
-### Get one expense
+## Get one expense
 
 ```http
 GET /expenses/<id>
@@ -239,6 +295,17 @@ Successful response:
 
 ```text
 200 OK
+```
+
+Example:
+
+```json
+{
+  "id": 1,
+  "amount": 100.0,
+  "category": "food",
+  "name": "pizza"
+}
 ```
 
 If the expense does not exist:
@@ -255,7 +322,7 @@ If the expense does not exist:
 
 ---
 
-### Get totals by category
+## Totals by category
 
 ```http
 GET /expenses/totals
@@ -263,11 +330,7 @@ GET /expenses/totals
 
 Returns the total expense amount for each category.
 
-Successful response:
-
-```text
-200 OK
-```
+The aggregation is performed directly in SQLite using `GROUP BY` and `SUM`.
 
 Example:
 
@@ -278,7 +341,7 @@ Example:
 }
 ```
 
-If there are no expenses, the response is:
+An empty database returns:
 
 ```json
 {}
@@ -286,7 +349,7 @@ If there are no expenses, the response is:
 
 ---
 
-### Get largest expense
+## Largest expense
 
 ```http
 GET /expenses/largest
@@ -294,24 +357,22 @@ GET /expenses/largest
 
 Returns the expense with the largest amount.
 
-Successful response:
-
-```text
-200 OK
-```
+The largest expense is selected directly in SQLite using sorting and `LIMIT 1`.
 
 Example:
 
 ```json
 {
-  "id": 2,
-  "amount": 200.0,
-  "category": "transport",
-  "name": "bus"
+  "id": 1,
+  "amount": 500.0,
+  "category": "food",
+  "name": "pizza"
 }
 ```
 
-If there are no expenses, the response is:
+If several expenses have the same largest amount, the expense with the smallest `id` is returned.
+
+An empty database returns:
 
 ```json
 null
@@ -319,13 +380,13 @@ null
 
 ---
 
-### Update an expense
+## Update an expense
 
 ```http
 PATCH /expenses/<id>
 ```
 
-Only the fields included in the request are updated.
+Only fields included in the request are updated.
 
 Example:
 
@@ -336,8 +397,6 @@ Example:
 }
 ```
 
-Fields that are not included remain unchanged.
-
 Allowed fields:
 
 ```text
@@ -346,19 +405,21 @@ category
 name
 ```
 
+Fields that are not provided remain unchanged.
+
 Successful response:
 
 ```text
 200 OK
 ```
 
-Invalid values, an empty update, or unknown fields return:
+Invalid values, unknown fields, or an empty update return:
 
 ```text
 400 Bad Request
 ```
 
-A missing expense returns:
+If the expense does not exist:
 
 ```text
 404 Not Found
@@ -366,7 +427,7 @@ A missing expense returns:
 
 ---
 
-### Delete one expense
+## Delete one expense
 
 ```http
 DELETE /expenses/<id>
@@ -386,7 +447,7 @@ If the expense does not exist:
 
 ---
 
-### Delete all expenses
+## Delete all expenses
 
 ```http
 DELETE /expenses
@@ -398,29 +459,82 @@ Successful response:
 204 No Content
 ```
 
-## Database layer
+---
 
-Main functions in `db.py`:
+# Database layer
+
+SQLite access is implemented in `db.py`.
+
+Main functions:
 
 ```python
 init_db()
 
 create_expense(amount, category, name)
 
-get_expenses()
+get_expenses(
+    category=None,
+    name=None,
+    min_amount=None,
+    max_amount=None,
+    sort=None,
+    limit=None,
+    offset=None,
+)
 
 get_expense_by_id(expense_id)
+
+calculate_totals_by_category()
+
+get_largest_expense()
 
 update_expense(expense_id, amount, category, name)
 
 delete_expense(expense_id)
 
 delete_expenses()
+
+count_expenses(
+    category=None,
+    name=None,
+    min_amount=None,
+    max_amount=None,
+)
 ```
 
-`get_expenses()` returns expenses ordered by `id` as dictionaries.
+## Query behavior
 
-`update_expense()` supports partial updates: fields passed as `None` are left unchanged.
+`get_expenses()` performs filtering, sorting, and pagination directly in SQLite.
+
+Filtering conditions use SQL parameters rather than inserting user values directly into the query.
+
+`count_expenses()` applies the same filters used by `GET /expenses` and returns the number of matching rows before pagination.
+
+`calculate_totals_by_category()` uses SQL aggregation:
+
+```sql
+GROUP BY category
+SUM(amount)
+```
+
+`get_largest_expense()` orders expenses by:
+
+```text
+amount descending
+id ascending
+```
+
+and uses:
+
+```sql
+LIMIT 1
+```
+
+to return only the required row.
+
+`get_expense_by_id()` returns one expense or `None`.
+
+`update_expense()` supports partial updates.
 
 `delete_expense()` returns:
 
@@ -429,98 +543,144 @@ True  - one expense was deleted
 False - the expense did not exist
 ```
 
-## Validation
+---
 
-The project validates:
+# Validation
+
+Input validation is implemented before values are written through the API.
+
+The project validates that:
 
 - `amount` is an `int` or `float`;
-- booleans are not accepted as amounts;
-- `amount` must be greater than `0`;
-- `category` must be a non-empty string;
-- `name` must be a non-empty string.
+- boolean values are not accepted as amounts;
+- `amount` is greater than `0`;
+- `category` is a non-empty string;
+- `name` is a non-empty string.
 
 Whitespace around `category` and `name` is removed before values are stored through the API.
 
-## Tests
+Amount filters are converted to numbers before they are passed to the database layer.
+
+Invalid query parameters return controlled `400 Bad Request` responses instead of being passed directly into SQL.
+
+---
+
+# Tests
 
 The project uses `pytest`.
+
+Current test suite:
+
+```text
+77 passed
+```
 
 Tests are split into:
 
 ```text
-tests/test_expense_logic.py
-tests/test_db.py
 tests/test_app.py
+tests/test_db.py
 ```
 
-Database and API tests use temporary SQLite databases, so the normal project database is not modified during testing.
+Database and API tests use temporary SQLite databases, so running the tests does not modify the normal application database.
 
-The test suite covers:
+The suite covers:
 
-- expense calculation logic;
-- input validation behavior;
 - database initialization;
-- creating and reading expenses;
-- partial expense updates;
-- deleting expenses;
-- repeated deletion;
+- creating expenses;
+- reading one or many expenses;
 - empty database behavior;
-- GET success and 404 responses;
-- POST success and validation errors;
-- PATCH success, invalid requests, unknown fields, and missing expenses;
-- DELETE success and missing expenses;
+- filtering by category and name;
+- minimum and maximum amount filters;
+- combined filters;
+- sorting;
+- pagination;
+- invalid pagination parameters;
+- `X-Total-Count`;
+- totals by category;
+- largest-expense selection;
+- equal largest amounts and deterministic `id` tie-breaking;
+- partial updates;
+- deleting one expense;
+- repeated deletion;
 - deleting all expenses;
-- filtering expenses by `category` and `name` query parameters;
-- calculating expense totals by category through `GET /expenses/totals`;
-- finding the largest expense through `GET /expenses/largest`;
-- filtering expenses by `min_amount` and `max_amount` query parameters;
-- pagination with `limit` and `offset`;
-- sorting expenses by amount;
-- `X-Total-Count` behavior with filters and pagination;
-- API key authentication for protected expense endpoints;
-- liveness check through `GET /health`.
+- API authentication;
+- POST validation;
+- PATCH validation;
+- 404 responses;
+- public health endpoint.
 
-## Run the tests
-
-From the project directory:
+Run the complete suite:
 
 ```bash
 python -m pytest -q
 ```
 
-## Run the smoke test
+---
 
-The smoke test checks a running deployment through HTTP.
+# Continuous integration
+
+The repository contains a GitHub Actions workflow:
+
+```text
+.github/workflows/ci.yml
+```
+
+CI runs the automated test suite so regressions can be detected after repository changes.
+
+---
+
+# Smoke test
+
+`smoke.py` performs HTTP checks against a running instance of the API.
 
 It verifies:
 
 - public `GET /health`;
-- `401 Unauthorized` for `GET /expenses` without an API key;
+- unauthorized access without an API key;
 - authenticated expense creation;
-- reading the created expense by its ID;
-- deleting only the expense created by the smoke test.
+- reading the created expense;
+- deleting the expense created by the smoke test.
 
-The smoke test reads its target and API key from the `SMOKE_BASE_URL` and `API_KEY` environment variables.
+The script uses:
 
-Set both variables in your shell, then run:
+```text
+SMOKE_BASE_URL
+API_KEY
+```
 
-```bash
+Example PowerShell configuration:
+
+```powershell
+$env:SMOKE_BASE_URL = "http://127.0.0.1:8000"
+$env:API_KEY = "local-development-key"
+
 python smoke.py
 ```
 
-The script does not use bulk deletion. If a failure happens after creating the test expense, it attempts to delete only that expense.
+The smoke test does not delete all expenses.
 
-## Run the API
+If cleanup is required, it deletes only the expense created by that smoke run.
 
-Install the dependencies used by the project:
+---
+
+# Running locally
+
+## Install dependencies
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-### Development
+## Configure the API key
 
-Start the application with the Flask development server:
+PowerShell:
+
+```powershell
+$env:API_KEY = "local-development-key"
+```
+
+## Development server
 
 ```bash
 python app.py
@@ -528,25 +688,33 @@ python app.py
 
 The application initializes the SQLite database and starts the Flask development server.
 
-### Production
+---
 
-Start the application with Waitress:
+# Production-style startup
+
+The application can be served with Waitress:
 
 ```bash
 waitress-serve wsgi:app
 ```
 
-`wsgi.py` initializes the SQLite database before exposing the Flask application to Waitress.
+`wsgi.py` initializes the database before exposing the Flask application to Waitress.
 
-### Database path
+---
 
-By default, the application uses:
+# Database persistence
+
+By default, the API uses:
 
 ```text
 expenses.db
 ```
 
-The database path can be configured with the `DATABASE_PATH` environment variable.
+A different SQLite file can be selected with:
+
+```text
+DATABASE_PATH
+```
 
 Example in PowerShell:
 
@@ -555,24 +723,98 @@ $env:DATABASE_PATH = "custom-expenses.db"
 waitress-serve wsgi:app
 ```
 
-If `DATABASE_PATH` is not set, the application falls back to `expenses.db`.
+If `DATABASE_PATH` is not set, the application falls back to:
 
-## Project structure
+```text
+expenses.db
+```
+
+Using the same database path across application restarts preserves stored expenses.
+
+---
+
+# Environment variables
+
+| Variable         | Purpose                                              |
+| ---------------- | ---------------------------------------------------- |
+| `API_KEY`        | Expected API key for protected `/expenses` endpoints |
+| `DATABASE_PATH`  | Path to the SQLite database file                     |
+| `SMOKE_BASE_URL` | Base URL used by `smoke.py`                          |
+
+Do not commit real secrets or production credentials.
+
+---
+
+# Project structure
 
 ```text
 expense-tracker-api/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml
+├── .gitignore
 ├── app.py
 ├── db.py
 ├── expense_logic.py
-├── requirements.txt
 ├── README.md
+├── requirements.txt
 ├── smoke.py
 ├── wsgi.py
 └── tests/
     ├── test_app.py
-    ├── test_db.py
-    └── test_expense_logic.py
+    └── test_db.py
+```
+
+## Files
+
+`app.py`
+: Flask routes, request validation, authentication, and HTTP responses.
+
+`db.py`
+: SQLite persistence, filtering, sorting, pagination, counting, aggregation, and largest-expense queries.
+
+`expense_logic.py`
+: reusable validation helpers.
+
+`wsgi.py`
+: application entry point for Waitress.
+
+`smoke.py`
+: HTTP smoke checks against a running API.
+
+`tests/test_app.py`
+: API-level behavior.
+
+`tests/test_db.py`
+: database-layer behavior.
+
+`.github/workflows/ci.yml`
+: GitHub Actions CI configuration.
+
+---
+
+# Current capabilities
+
+The API currently supports:
+
+```text
+health
+authentication
+create
+read
+update
+delete
+bulk delete
+filtering
+amount ranges
+sorting
+pagination
+total-count metadata
+totals by category
+largest expense
+SQLite persistence
+automated tests
+CI
+HTTP smoke testing
+Waitress startup
 ```
