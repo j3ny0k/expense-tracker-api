@@ -644,7 +644,23 @@ def test_patch_expense_non_finite_amount(tmp_path, monkeypatch):
     )
 
     assert response.status_code == 400
-    assert response.get_json() == {"error": "amount is required"}
+    assert response.get_json() == {"error": "amount must be a positive finite number"}
+
+
+def test_patch_expense_invalid_amount(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    create_expense(100.0, "food", "pizza")
+
+    client = create_test_client()
+
+    response = client.patch(
+        "/expenses/1",
+        json={"amount": 0},
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "amount must be a positive finite number"}
 
 
 def test_get_expenses_filter_by_category_and_min_amount(tmp_path, monkeypatch):

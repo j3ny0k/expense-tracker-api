@@ -228,7 +228,7 @@ def api_update_expense(expense_id):
 
     if "amount" in data:
         if not validate_amount(data):
-            return jsonify({"error": "amount is required"}), 400
+            return jsonify({"error": "amount must be a positive finite number"}), 400
 
         amount = data.get("amount")
 
