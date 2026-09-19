@@ -12,7 +12,7 @@ The project demonstrates an end-to-end backend workflow:
 - SQL query for the largest expense;
 - input validation and controlled HTTP errors;
 - configurable SQLite persistence through `DATABASE_PATH`;
-- 77 automated API and database tests;
+- 79 automated API and database tests;
 - GitHub Actions CI;
 - production-style startup with Waitress;
 - HTTP smoke testing.
@@ -554,6 +554,7 @@ The project validates that:
 - `amount` is an `int` or `float`;
 - boolean values are not accepted as amounts;
 - `amount` is greater than `0`;
+- `amount` must be a finite number;
 - `category` is a non-empty string;
 - `name` is a non-empty string.
 
@@ -572,7 +573,7 @@ The project uses `pytest`.
 Current test suite:
 
 ```text
-77 passed
+79 passed
 ```
 
 Tests are split into:
@@ -626,7 +627,7 @@ The repository contains a GitHub Actions workflow:
 .github/workflows/ci.yml
 ```
 
-CI runs the automated test suite so regressions can be detected after repository changes.
+CI runs the automated test suite, starts the API with Waitress, waits for the health endpoint, and runs the HTTP smoke test.
 
 ---
 
