@@ -641,6 +641,8 @@ It verifies:
 - unauthorized access without an API key;
 - authenticated expense creation;
 - reading the created expense;
+- updating the created expense with PATCH;
+- reading the updated expense;
 - deleting the expense created by the smoke test.
 
 The script uses:
