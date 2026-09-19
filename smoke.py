@@ -140,6 +140,37 @@ def read_expense(expense_id, payload):
     print("read: ok")
 
 
+def update_expense(expense_id):
+    payload = {
+        "amount": 2.0,
+        "category": "smoke-updated",
+        "name": "smoke-updated",
+    }
+
+    request = urllib.request.Request(
+        build_url(f"/expenses/{expense_id}"),
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "X-API-Key": api_key,
+        },
+        method="PATCH",
+    )
+
+    body = open_json(request, "update", 200)
+
+    expected = {
+        "id": expense_id,
+        **payload,
+    }
+
+    if body != expected:
+        raise SmokeError("update failed: unexpected expense")
+
+    print("update: ok")
+    return expense_id, payload
+
+
 def delete_expense(expense_id, step="delete"):
     request = urllib.request.Request(
         build_url(f"/expenses/{expense_id}"),
@@ -164,6 +195,10 @@ def main():
         check_expenses_without_key()
 
         created_id, payload = create_expense()
+        read_expense(created_id, payload)
+
+        created_id, payload = update_expense(created_id)
+
         read_expense(created_id, payload)
 
         delete_expense(created_id)
