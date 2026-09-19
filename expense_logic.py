@@ -1,8 +1,14 @@
+import math
+
+
 def validate_amount(expense):
     amount = expense.get("amount")
 
     return (
-        isinstance(amount, (int, float)) and not isinstance(amount, bool) and amount > 0
+        isinstance(amount, (int, float))
+        and not isinstance(amount, bool)
+        and amount > 0
+        and math.isfinite(amount)
     )
 
 

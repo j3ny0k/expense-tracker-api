@@ -595,6 +595,40 @@ def test_max_amount_non_finite(tmp_path, monkeypatch):
     assert response.get_json() == {"error": "amount is required"}
 
 
+def test_post_expense_non_finite_amount(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.post(
+        "/expenses",
+        json={
+            "amount": float("inf"),
+            "category": "food",
+            "name": "pizza",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "amount is required"}
+
+
+def test_patch_expense_non_finite_amount(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    create_expense(100.0, "food", "pizza")
+
+    client = create_test_client()
+
+    response = client.patch(
+        "/expenses/1",
+        json={"amount": float("inf")},
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "amount is required"}
+
+
 def test_get_expenses_filter_by_category_and_min_amount(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
