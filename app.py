@@ -92,9 +92,9 @@ def api_get_expenses():
             min_amount = float(min_amount)
 
             if not math.isfinite(min_amount):
-                return jsonify({"error": "amount is required"}), 400
+                return jsonify({"error": "min_amount must be a finite number"}), 400
         except ValueError:
-            return jsonify({"error": "amount is required"}), 400
+            return jsonify({"error": "min_amount must be a finite number"}), 400
 
     if max_amount is not None:
         try:

@@ -524,7 +524,7 @@ def test_min_amount_error(tmp_path, monkeypatch):
     response = client.get("/expenses?min_amount=abc")
 
     assert response.status_code == 400
-    assert response.get_json() == {"error": "amount is required"}
+    assert response.get_json() == {"error": "min_amount must be a finite number"}
 
 
 def test_max_amount_error(tmp_path, monkeypatch):
@@ -599,7 +599,7 @@ def test_min_amount_non_finite(tmp_path, monkeypatch):
     response = client.get("/expenses?min_amount=nan")
 
     assert response.status_code == 400
-    assert response.get_json() == {"error": "amount is required"}
+    assert response.get_json() == {"error": "min_amount must be a finite number"}
 
 
 def test_max_amount_non_finite(tmp_path, monkeypatch):
