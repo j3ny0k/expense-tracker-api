@@ -12,7 +12,7 @@ The project demonstrates an end-to-end backend workflow:
 - SQL query for the largest expense;
 - input validation and controlled HTTP errors;
 - configurable SQLite persistence through `DATABASE_PATH`;
-- 79 automated API and database tests;
+- 81 automated API and database tests;
 - GitHub Actions CI;
 - production-style startup with Waitress;
 - HTTP smoke testing.
@@ -573,7 +573,7 @@ The project uses `pytest`.
 Current test suite:
 
 ```text
-79 passed
+81 passed
 ```
 
 Tests are split into:
