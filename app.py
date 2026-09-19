@@ -50,8 +50,11 @@ def api_create_expense():
     if not isinstance(data, dict):
         return jsonify({"error": "JSON object is required"}), 400
 
-    if "amount" not in data or not validate_amount(data):
+    if "amount" not in data:
         return jsonify({"error": "amount is required"}), 400
+
+    if not validate_amount(data):
+        return jsonify({"error": "amount must be a positive finite number"}), 400
 
     if "category" not in data or not validate_category(data):
         return jsonify({"error": "category is required"}), 400
