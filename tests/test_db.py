@@ -1,4 +1,5 @@
 from db import (
+    calculate_total_by_amount,
     calculate_totals_by_category,
     create_expense,
     delete_expense,
@@ -152,6 +153,17 @@ def test_calculate_totals_by_category_empty(tmp_path, monkeypatch):
     result = calculate_totals_by_category()
 
     assert result == {}
+
+
+def test_calculate_total_empty(tmp_path, monkeypatch):
+    test_db = tmp_path / "expenses.db"
+    monkeypatch.setattr("db.DB_NAME", test_db)
+
+    init_db()
+
+    result = calculate_total_by_amount()
+
+    assert result == {"total": 0}
 
 
 def test_get_largest_expense(tmp_path, monkeypatch):

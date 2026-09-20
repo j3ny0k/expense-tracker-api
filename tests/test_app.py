@@ -406,6 +406,31 @@ def test_calculate_totals_by_category_empty(tmp_path, monkeypatch):
     assert response.get_json() == {}
 
 
+def test_calculate_total_by_amount_empty(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses/total")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"total": 0}
+
+
+def test_calculate_total_by_amount(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(250.0, "transport", "bus")
+
+    response = client.get("/expenses/total")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"total": 350.0}
+
+
 def test_find_largest_valid_expense(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 

@@ -156,6 +156,20 @@ def calculate_totals_by_category():
     return totals
 
 
+def calculate_total_by_amount():
+    connection = get_connection()
+
+    cursor = connection.execute("SELECT COALESCE(SUM(amount), 0) FROM expenses")
+
+    raw = cursor.fetchone()
+
+    total = {"total": raw[0]}
+
+    connection.close()
+
+    return total
+
+
 def get_largest_expense():
     connection = get_connection()
 
