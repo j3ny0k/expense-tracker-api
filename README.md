@@ -12,7 +12,7 @@ The project demonstrates an end-to-end backend workflow:
 - SQL query for the largest expense;
 - input validation and controlled HTTP errors;
 - configurable SQLite persistence through `DATABASE_PATH`;
-- 81 automated API and database tests;
+- 84 automated API and database tests;
 - GitHub Actions CI;
 - production-style startup with Waitress;
 - HTTP smoke testing.
@@ -349,6 +349,34 @@ An empty database returns:
 
 ---
 
+## Total expenses
+
+```http
+GET /expenses/total
+```
+
+Returns the total amount of all expenses.
+
+The total is calculated directly in SQLite using `SUM`.
+
+Example:
+
+```json
+{
+  "total": 350.0
+}
+```
+
+An empty database returns:
+
+```json
+{
+  "total": 0
+}
+```
+
+---
+
 ## Largest expense
 
 ```http
@@ -486,6 +514,8 @@ get_expense_by_id(expense_id)
 
 calculate_totals_by_category()
 
+calculate_total_by_amount()
+
 get_largest_expense()
 
 update_expense(expense_id, amount, category, name)
@@ -573,7 +603,7 @@ The project uses `pytest`.
 Current test suite:
 
 ```text
-81 passed
+84 passed
 ```
 
 Tests are split into:
@@ -814,6 +844,7 @@ sorting
 pagination
 total-count metadata
 totals by category
+total expenses
 largest expense
 SQLite persistence
 automated tests
