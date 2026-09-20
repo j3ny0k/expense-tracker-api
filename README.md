@@ -1,5 +1,7 @@
 # Expense Tracker API
 
+[![Tests](https://github.com/j3ny0k/expense-tracker-api/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/j3ny0k/expense-tracker-api/actions/workflows/ci.yml)
+
 A REST API for managing expenses, built with **Python, Flask, SQLite, pytest, and Waitress**.
 
 The project demonstrates an end-to-end backend workflow:
