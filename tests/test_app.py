@@ -1205,3 +1205,22 @@ def test_get_expenses_name_contains_with_pagination(tmp_path, monkeypatch):
     assert len(response.get_json()) == 1
     assert response.get_json()[0]["name"] == "pizza"
     assert response.headers["X-Total-Count"] == "2"
+
+
+def test_sort_by_name_asc(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "apple")
+
+    response = client.get("/expenses?sort=name_asc")
+
+    assert response.status_code == 200
+    assert [expense["name"] for expense in response.get_json()] == [
+        "apple",
+        "bus",
+        "pizza",
+    ]

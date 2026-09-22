@@ -120,7 +120,7 @@ def api_get_expenses():
     sort = request.args.get("sort")
 
     if sort is not None:
-        allowed_sorts = {"amount_desc", "amount_asc"}
+        allowed_sorts = {"amount_desc", "amount_asc", "name_desc", "name_asc"}
 
         if sort not in allowed_sorts:
             return jsonify({"error": "unknown sort"}), 400

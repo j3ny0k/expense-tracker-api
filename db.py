@@ -86,6 +86,10 @@ def get_expenses(
         sql += " ORDER BY amount ASC"
     elif sort == "amount_desc":
         sql += " ORDER BY amount DESC"
+    elif sort == "name_asc":
+        sql += " ORDER BY name ASC"
+    elif sort == "name_desc":
+        sql += " ORDER BY name DESC"
     else:
         sql += " ORDER BY id ASC"
 
