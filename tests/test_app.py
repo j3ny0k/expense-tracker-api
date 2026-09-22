@@ -1224,3 +1224,22 @@ def test_sort_by_name_asc(tmp_path, monkeypatch):
         "bus",
         "pizza",
     ]
+
+
+def test_sort_by_category_asc(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "transport", "bus")
+    create_expense(200.0, "food", "pizza")
+    create_expense(300.0, "books", "python")
+
+    response = client.get("/expenses?sort=category_asc")
+
+    assert response.status_code == 200
+    assert [expense["category"] for expense in response.get_json()] == [
+        "books",
+        "food",
+        "transport",
+    ]
