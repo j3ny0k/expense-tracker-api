@@ -27,9 +27,7 @@ app = Flask(__name__)
 
 @app.after_request
 def apiafter_request(response):
-    app.logger.info(
-        f"method: {request.method}, route: {request.path}, status code: {response.status_code}"
-    )
+    app.logger.info(f"{request.method} {request.path} {response.status_code}")
     return response
 
 
@@ -92,6 +90,8 @@ def api_get_expenses():
 
     name = request.args.get("name")
 
+    name_contains = request.args.get("name_contains")
+
     min_amount = request.args.get("min_amount")
 
     max_amount = request.args.get("max_amount")
@@ -149,11 +149,18 @@ def api_get_expenses():
         if offset < 0:
             return jsonify({"error": "offset must be greater than or equal to 0"}), 400
 
-    total_count = count_expenses(category, name, min_amount, max_amount)
+    total_count = count_expenses(
+        category,
+        name,
+        name_contains,
+        min_amount,
+        max_amount,
+    )
 
     expenses = get_expenses(
         category,
         name,
+        name_contains,
         min_amount,
         max_amount,
         sort,
@@ -162,6 +169,7 @@ def api_get_expenses():
     )
 
     response = jsonify(expenses)
+
     response.headers["X-Total-Count"] = str(total_count)
     return response, 200
 

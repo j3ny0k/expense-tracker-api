@@ -45,6 +45,7 @@ def create_expense(amount, category, name):
 def get_expenses(
     category=None,
     name=None,
+    name_contains=None,
     min_amount=None,
     max_amount=None,
     sort=None,
@@ -63,6 +64,10 @@ def get_expenses(
     if name is not None:
         conditions.append("name = ?")
         params.append(name)
+
+    if name_contains is not None:
+        conditions.append("LOWER(name) LIKE ?")
+        params.append(f"%{name_contains.lower()}%")
 
     if min_amount is not None:
         conditions.append("amount >= ?")
@@ -250,7 +255,13 @@ def delete_expenses():
     return True
 
 
-def count_expenses(category=None, name=None, min_amount=None, max_amount=None):
+def count_expenses(
+    category=None,
+    name=None,
+    name_contains=None,
+    min_amount=None,
+    max_amount=None,
+):
     connection = get_connection()
 
     conditions = []
@@ -263,6 +274,10 @@ def count_expenses(category=None, name=None, min_amount=None, max_amount=None):
     if name is not None:
         conditions.append("name = ?")
         params.append(name)
+
+    if name_contains is not None:
+        conditions.append("LOWER(name) LIKE ?")
+        params.append(f"%{name_contains.lower()}%")
 
     if min_amount is not None:
         conditions.append("amount >= ?")

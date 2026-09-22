@@ -1188,3 +1188,20 @@ def test_request_logging(caplog):
     assert "GET" in caplog.text
     assert "/health" in caplog.text
     assert "200" in caplog.text
+
+
+def test_get_expenses_name_contains_with_pagination(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "food", "pizzeria")
+    create_expense(300.0, "transport", "bus")
+
+    response = client.get("/expenses?name_contains=pizz&limit=1")
+
+    assert response.status_code == 200
+    assert len(response.get_json()) == 1
+    assert response.get_json()[0]["name"] == "pizza"
+    assert response.headers["X-Total-Count"] == "2"
