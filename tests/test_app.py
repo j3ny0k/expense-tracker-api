@@ -1,3 +1,5 @@
+import logging
+
 from app import app
 from db import create_expense, init_db
 
@@ -1173,3 +1175,16 @@ def test_patch_expense_without_json(tmp_path, monkeypatch):
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "JSON object is required"}
+
+
+def test_request_logging(caplog):
+    caplog.set_level(logging.INFO, logger=app.logger.name)
+
+    client = app.test_client()
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    assert "GET" in caplog.text
+    assert "/health" in caplog.text
+    assert "200" in caplog.text

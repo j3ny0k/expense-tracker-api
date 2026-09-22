@@ -25,6 +25,14 @@ from expense_logic import (
 app = Flask(__name__)
 
 
+@app.after_request
+def apiafter_request(response):
+    app.logger.info(
+        f"method: {request.method}, route: {request.path}, status code: {response.status_code}"
+    )
+    return response
+
+
 @app.get("/health")
 def api_health():
     return jsonify({"status": "ok"}), 200
