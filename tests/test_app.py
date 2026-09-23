@@ -1243,3 +1243,22 @@ def test_sort_by_category_asc(tmp_path, monkeypatch):
         "food",
         "transport",
     ]
+
+
+def test_expenses_summary(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "transport", "bus")
+    create_expense(200.0, "food", "pizza")
+    create_expense(300.0, "books", "python")
+
+    response = client.get("/expenses/summary")
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "count": 3,
+        "largest": {"amount": 300.0, "category": "books", "id": 3, "name": "python"},
+        "total": 600.0,
+    }

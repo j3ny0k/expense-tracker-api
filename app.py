@@ -220,6 +220,25 @@ def api_calculate_total_by_amount():
     return jsonify(total), 200
 
 
+@app.get("/expenses/summary")
+def api_expenses_summary():
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
+    count = count_expenses()
+
+    raw_total = calculate_total_by_amount()
+    total = raw_total["total"]
+
+    largest = get_largest_expense()
+
+    summary = {"count": count, "total": total, "largest": largest}
+
+    return jsonify(summary), 200
+
+
 @app.get("/expenses/largest")
 def api_find_largest_valid_expense():
     auth_error = check_api_key()
