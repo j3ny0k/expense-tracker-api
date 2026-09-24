@@ -16,6 +16,7 @@ REST API for expense tracking built with **Python, Flask, SQLite, pytest, and Wa
 - 89 automated tests
 - GitHub Actions CI with runtime HTTP smoke testing
 - production-style startup with Waitress
+- Dockerized application runtime
 
 ## Expense structure
 
@@ -170,6 +171,28 @@ waitress-serve wsgi:app
 
 `wsgi.py` initializes the database before exposing the Flask application.
 
+### Docker
+
+Build the image:
+
+```bash
+docker build -t expense-tracker-api .
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 8000:8000 -e API_KEY=local-development-key expense-tracker-api
+```
+
+Check the health endpoint:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+The API is served by Waitress on port `8000` inside the container.
+
 ## Environment variables
 
 | Variable         | Purpose                                     |
@@ -187,7 +210,9 @@ expense-tracker-api/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml
+├── .dockerignore
 ├── .gitignore
+├── Dockerfile
 ├── app.py
 ├── db.py
 ├── expense_logic.py
