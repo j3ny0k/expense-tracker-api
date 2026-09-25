@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/j3ny0k/expense-tracker-api/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/j3ny0k/expense-tracker-api/actions/workflows/ci.yml)
 
-REST API for expense tracking built with **Python, Flask, SQLite, pytest, and Waitress**.
+REST API for expense tracking built with **Python, Flask, SQLite/PostgreSQL, pytest, and Waitress**.
 
 ## Highlights
 
@@ -12,7 +12,7 @@ REST API for expense tracking built with **Python, Flask, SQLite, pytest, and Wa
 - sorting and pagination with `X-Total-Count`
 - SQL aggregation for category totals and total expenses
 - largest-expense query with deterministic tie-breaking
-- configurable SQLite persistence
+- SQLite by default with optional PostgreSQL via `DATABASE_URL`
 - 89 automated tests
 - GitHub Actions CI with runtime HTTP smoke testing
 - production-style startup with Waitress
@@ -96,11 +96,11 @@ The expected key is read from the `API_KEY` environment variable.
 
 ## Implementation
 
-SQLite access is implemented in `db.py`.
+Database access is implemented in `db.py`.
 
-Filtering, sorting, pagination, counting, and aggregations are performed directly in SQLite using parameterized queries.
+SQLite is used by default. If `DATABASE_URL` is set, the application connects to PostgreSQL instead.
 
-The API validates input before values are passed to the database layer.
+Filtering, sorting, pagination, counting, and aggregations are performed directly in the database using parameterized queries.
 
 ## Testing and CI
 
@@ -123,9 +123,10 @@ python -m pytest -q
 GitHub Actions runs:
 
 1. the full pytest suite;
-2. the API with Waitress;
-3. a `/health` readiness check;
-4. `smoke.py` against the running API.
+2. builds the Docker image;
+3. starts the API container;
+4. checks `/health`;
+5. runs `smoke.py` against the containerized API.
 
 The runtime smoke test verifies authentication and a real create → read → update → delete flow.
 
@@ -200,6 +201,7 @@ The API is served by Waitress on port `8000` inside the container.
 | `API_KEY`        | API key for protected `/expenses` endpoints |
 | `DATABASE_PATH`  | Path to the SQLite database                 |
 | `SMOKE_BASE_URL` | Base URL used by `smoke.py`                 |
+| `DATABASE_URL`   | PostgreSQL connection URL                   |
 
 Do not commit real secrets or production credentials.
 
