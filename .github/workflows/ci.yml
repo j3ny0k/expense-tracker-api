@@ -26,11 +26,14 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
-      - name: Start API
-        run: waitress-serve --listen=127.0.0.1:8000 wsgi:app &
+      - name: Build Docker image
+        run: docker build -t expense-tracker-api .
+
+      - name: Start API container
+        run: docker run -d --name expense-tracker-api-ci -p 8000:8000 -e API_KEY=$API_KEY expense-tracker-api
 
       - name: Wait for API
-        run: curl --retry 10 --retry-delay 1 --retry-connrefused http://127.0.0.1:8000/health
+        run: curl --fail --retry 10 --retry-delay 1 --retry-all-errors http://127.0.0.1:8000/health
 
       - name: Run smoke test
         run: python smoke.py
