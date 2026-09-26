@@ -18,7 +18,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      API_KEY: compose-test-key
+      API_KEY: ${API_KEY:-compose-test-key}
       DATABASE_URL: postgresql://expense_user:expense_pass@db:5432/expense_tracker
     depends_on:
       db:
