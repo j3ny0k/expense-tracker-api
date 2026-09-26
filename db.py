@@ -6,6 +6,15 @@ import psycopg
 DB_NAME = os.getenv("DATABASE_PATH", "expenses.db")
 
 
+def check_database():
+    connection = get_connection()
+
+    try:
+        connection.execute("SELECT 1")
+    finally:
+        connection.close()
+
+
 def get_connection():
     database_url = os.getenv("DATABASE_URL")
 

@@ -13,7 +13,7 @@ REST API for expense tracking built with **Python, Flask, SQLite/PostgreSQL, pyt
 - SQL aggregation for category totals and total expenses
 - largest-expense query with deterministic tie-breaking
 - SQLite by default with optional PostgreSQL via `DATABASE_URL`
-- 89 automated tests
+- 91 automated tests
 - GitHub Actions CI with runtime HTTP smoke testing
 - production-style startup with Waitress
 - Dockerized application runtime
@@ -48,6 +48,7 @@ expenses (
 
 | Method | Endpoint            | Description                               |
 | ------ | ------------------- | ----------------------------------------- |
+| GET    | `/ready`            | Readiness check for database connectivity |
 | GET    | `/health`           | Health check                              |
 | GET    | `/expenses`         | List, filter, sort, and paginate expenses |
 | GET    | `/expenses/summary` | Count, total amount, and largest expense  |
@@ -84,7 +85,7 @@ Successful list responses include `X-Total-Count`, which reports the number of m
 
 ## Authentication
 
-`/health` is public.
+`/health` and `/ready` are public.
 
 All `/expenses` endpoints require an API key in the `X-API-Key` header:
 
@@ -109,7 +110,7 @@ The project uses `pytest`.
 Current test suite:
 
 ```text
-89 passed
+91 passed
 ```
 
 Tests cover API behavior, validation, authentication, database operations, filtering, sorting, pagination, aggregations, updates, and deletion.

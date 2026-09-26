@@ -6,6 +6,7 @@ from flask import Flask, jsonify, request
 from db import (
     calculate_total_by_amount,
     calculate_totals_by_category,
+    check_database,
     count_expenses,
     create_expense,
     delete_expense,
@@ -29,6 +30,16 @@ app = Flask(__name__)
 def apiafter_request(response):
     app.logger.info(f"{request.method} {request.path} {response.status_code}")
     return response
+
+
+@app.get("/ready")
+def api_ready():
+    try:
+        check_database()
+    except Exception:
+        return jsonify({"status": "unavailable"}), 503
+
+    return jsonify({"status": "ready"}), 200
 
 
 @app.get("/health")

@@ -29,8 +29,8 @@ jobs:
       - name: Start Compose stack
         run: docker compose up -d --build
 
-      - name: Wait for API
-        run: curl --fail --retry 10 --retry-delay 1 --retry-all-errors http://127.0.0.1:8000/health
+      - name: Wait for API readiness
+        run: curl --fail --retry 10 --retry-delay 1 --retry-all-errors http://127.0.0.1:8000/ready
 
       - name: Run smoke test
         run: python smoke.py

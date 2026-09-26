@@ -1153,6 +1153,31 @@ def test_health():
     assert response.get_json() == {"status": "ok"}
 
 
+def test_ready(monkeypatch):
+    monkeypatch.setattr("app.check_database", lambda: None)
+
+    client = app.test_client()
+
+    response = client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"status": "ready"}
+
+
+def test_ready_database_unavailable(monkeypatch):
+    def fail_database():
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr("app.check_database", fail_database)
+
+    client = app.test_client()
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.get_json() == {"status": "unavailable"}
+
+
 def test_post_expense_without_body(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
 
