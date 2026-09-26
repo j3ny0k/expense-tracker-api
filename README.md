@@ -194,6 +194,42 @@ curl http://127.0.0.1:8000/health
 
 The API is served by Waitress on port `8000` inside the container.
 
+### Docker Compose
+
+Run the application and PostgreSQL together:
+
+```bash
+docker compose up -d --build
+```
+
+Check the services:
+
+```bash
+docker compose ps
+```
+
+The application is available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+Docker Compose starts:
+
+- the API container;
+- a PostgreSQL 17 container;
+- a persistent PostgreSQL volume.
+
+The API connects to PostgreSQL through the internal Compose hostname `db`.
+
+Stop the stack:
+
+```bash
+docker compose down
+```
+
+The PostgreSQL volume is preserved, so stored expenses survive container recreation.
+
 ## Environment variables
 
 | Variable         | Purpose                                     |
@@ -215,6 +251,7 @@ expense-tracker-api/
 ├── .dockerignore
 ├── .gitignore
 ├── Dockerfile
+├── compose.yml
 ├── app.py
 ├── db.py
 ├── expense_logic.py
