@@ -13,7 +13,7 @@ REST API for expense tracking built with **Python, Flask, SQLite/PostgreSQL, pyt
 - SQL aggregation for category totals and total expenses
 - largest-expense query with deterministic tie-breaking
 - SQLite by default with optional PostgreSQL via `DATABASE_URL`
-- 91 automated tests
+- 92 automated tests
 - GitHub Actions CI with runtime HTTP smoke testing
 - production-style startup with Waitress
 - Dockerized application runtime
@@ -110,7 +110,7 @@ The project uses `pytest`.
 Current test suite:
 
 ```text
-91 passed
+92 passed
 ```
 
 Tests cover API behavior, validation, authentication, database operations, filtering, sorting, pagination, aggregations, updates, and deletion.
@@ -126,7 +126,7 @@ GitHub Actions runs:
 1. the full pytest suite;
 2. builds the Docker image;
 3. starts the API container;
-4. checks `/health`;
+4. waits for `/ready`;
 5. runs `smoke.py` against the containerized API.
 
 The runtime smoke test verifies authentication and a real create → read → update → delete flow.
@@ -231,6 +231,58 @@ docker compose down
 
 The PostgreSQL volume is preserved, so stored expenses survive container recreation.
 
+### PostgreSQL backup and restore
+
+Create a backup in PostgreSQL custom format:
+
+```bash
+docker compose exec db pg_dump -U expense_user -d expense_tracker -Fc -f /tmp/expense_tracker.dump
+```
+
+Copy the backup to the host:
+
+```powershell
+docker compose cp db:/tmp/expense_tracker.dump .\expense_tracker.dump
+```
+
+Create a separate database for restore verification:
+
+```bash
+docker compose exec db createdb -U expense_user expense_tracker_restore
+```
+
+Copy the backup into the database container:
+
+```powershell
+docker compose cp .\expense_tracker.dump db:/tmp/expense_tracker.dump
+```
+
+Restore the backup:
+
+```bash
+docker compose exec db pg_restore -U expense_user -d expense_tracker_restore /tmp/expense_tracker.dump
+```
+
+Verify restored data:
+
+```bash
+docker compose exec db psql -U expense_user -d expense_tracker_restore -c "SELECT id, amount, category, name FROM expenses ORDER BY id;"
+```
+
+Verify migration history:
+
+```bash
+docker compose exec db psql -U expense_user -d expense_tracker_restore -c "SELECT version FROM schema_migrations ORDER BY version;"
+```
+
+Remove the temporary restore database and dump:
+
+```bash
+docker compose exec db dropdb -U expense_user --if-exists expense_tracker_restore
+docker compose exec db rm -f /tmp/expense_tracker.dump
+Remove-Item .\expense_tracker.dump
+```
+
 ## Environment variables
 
 | Variable         | Purpose                                     |
@@ -256,11 +308,13 @@ expense-tracker-api/
 ├── app.py
 ├── db.py
 ├── expense_logic.py
+├── migrations.py
 ├── README.md
 ├── requirements.txt
 ├── smoke.py
 ├── wsgi.py
 └── tests/
     ├── test_app.py
-    └── test_db.py
+    ├── test_db.py
+    └── test_migrations.py
 ```
