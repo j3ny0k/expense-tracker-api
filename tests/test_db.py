@@ -21,7 +21,10 @@ def test_init_db(tmp_path, monkeypatch):
 
     connection = get_connection()
     columns = connection.execute("PRAGMA table_info(expenses)").fetchall()
+    versions = connection.execute("SELECT version FROM schema_migrations").fetchall()
     connection.close()
+
+    assert versions == [(1,)]
 
     assert columns[0][1] == "id"
     assert columns[0][2] == "INTEGER"
