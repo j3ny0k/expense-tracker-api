@@ -43,15 +43,23 @@ def get_applied_versions(connection):
 
 def run_migrations(connection):
     ensure_migrations_table(connection)
+    connection.commit()
 
     applied_versions = get_applied_versions(connection)
+    connection.commit()
 
     for version, migration in MIGRATIONS:
         if version not in applied_versions:
-            migration(connection)
+            try:
+                connection.execute("BEGIN")
 
-            connection.execute(
-                f"INSERT INTO schema_migrations (version) VALUES ({version})"
-            )
+                migration(connection)
 
-            connection.commit()
+                connection.execute(
+                    f"INSERT INTO schema_migrations (version) VALUES ({version})"
+                )
+
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
