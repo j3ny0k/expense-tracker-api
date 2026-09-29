@@ -1287,3 +1287,23 @@ def test_expenses_summary(tmp_path, monkeypatch):
         "largest": {"amount": 300.0, "category": "books", "id": 3, "name": "python"},
         "total": 600.0,
     }
+
+
+def test_get_expenses_filter_by_category_case_insensitive(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "Food", "pizza")
+    create_expense(300.0, "FOOD", "pizza")
+
+    response = client.get("/expenses?category=Food")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {"amount": 100.0, "category": "food", "id": 1, "name": "pizza"},
+        {"amount": 200.0, "category": "Food", "id": 2, "name": "pizza"},
+        {"amount": 300.0, "category": "FOOD", "id": 3, "name": "pizza"},
+    ]
+    assert response.headers["X-Total-Count"] == "3"

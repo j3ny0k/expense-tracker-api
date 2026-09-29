@@ -79,7 +79,7 @@ def get_expenses(
     params = []
 
     if category is not None:
-        conditions.append(f"category = {placeholder}")
+        conditions.append(f"LOWER(category) = LOWER({placeholder})")
         params.append(category)
 
     if name is not None:
@@ -313,7 +313,7 @@ def count_expenses(
     params = []
 
     if category is not None:
-        conditions.append(f"category = {placeholder}")
+        conditions.append(f"LOWER(category) = LOWER({placeholder})")
         params.append(category)
 
     if name is not None:
