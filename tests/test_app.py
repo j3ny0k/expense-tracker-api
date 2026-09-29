@@ -1307,3 +1307,23 @@ def test_get_expenses_filter_by_category_case_insensitive(tmp_path, monkeypatch)
         {"amount": 300.0, "category": "FOOD", "id": 3, "name": "pizza"},
     ]
     assert response.headers["X-Total-Count"] == "3"
+
+
+def test_get_expenses_filter_by_name_case_insensitive(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "pizza")
+    create_expense(200.0, "food", "Pizza")
+    create_expense(300.0, "food", "PIZZA")
+
+    response = client.get("/expenses?name=Pizza")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {"amount": 100.0, "category": "food", "id": 1, "name": "pizza"},
+        {"amount": 200.0, "category": "food", "id": 2, "name": "Pizza"},
+        {"amount": 300.0, "category": "food", "id": 3, "name": "PIZZA"},
+    ]
+    assert response.headers["X-Total-Count"] == "3"
