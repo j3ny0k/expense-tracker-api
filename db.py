@@ -182,7 +182,7 @@ def calculate_totals_by_category():
     connection = get_connection()
 
     cursor = connection.execute(
-        "SELECT category, SUM(amount) FROM expenses GROUP BY category"
+        "SELECT LOWER(category), SUM(amount) FROM expenses GROUP BY LOWER(category)"
     )
 
     raw = cursor.fetchall()
