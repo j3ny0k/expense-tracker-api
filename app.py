@@ -56,6 +56,18 @@ def check_api_key():
         return jsonify({"error": "unauthorized"}), 401
 
 
+def check_unknown_fields(data):
+    allowed_fields = {"amount", "category", "name"}
+
+    unknown_fields = set(data) - allowed_fields
+
+    if unknown_fields:
+        return (
+            jsonify({"error": f"unknown fields: {', '.join(sorted(unknown_fields))}"}),
+            400,
+        )
+
+
 @app.post("/expenses")
 def api_create_expense():
     auth_error = check_api_key()
@@ -68,15 +80,10 @@ def api_create_expense():
     if not isinstance(data, dict):
         return jsonify({"error": "JSON object is required"}), 400
 
-    allowed_fields = {"amount", "category", "name"}
+    fields_error = check_unknown_fields(data)
 
-    unknown_fields = set(data) - allowed_fields
-
-    if unknown_fields:
-        return (
-            jsonify({"error": f"unknown fields: {', '.join(sorted(unknown_fields))}"}),
-            400,
-        )
+    if fields_error is not None:
+        return fields_error
 
     if "amount" not in data:
         return jsonify({"error": "amount is required"}), 400
@@ -289,15 +296,10 @@ def api_update_expense(expense_id):
     if not isinstance(data, dict):
         return jsonify({"error": "JSON object is required"}), 400
 
-    allowed_fields = {"amount", "category", "name"}
+    fields_error = check_unknown_fields(data)
 
-    unknown_fields = set(data) - allowed_fields
-
-    if unknown_fields:
-        return (
-            jsonify({"error": f"unknown fields: {', '.join(sorted(unknown_fields))}"}),
-            400,
-        )
+    if fields_error is not None:
+        return fields_error
 
     if "amount" not in data and "category" not in data and "name" not in data:
         return jsonify({"error": "there must be at least one argument"}), 400
