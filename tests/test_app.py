@@ -1343,3 +1343,47 @@ def test_get_expenses_filter_by_name_case_insensitive(tmp_path, monkeypatch):
         {"amount": 300.0, "category": "food", "id": 3, "name": "PIZZA"},
     ]
     assert response.headers["X-Total-Count"] == "3"
+
+
+def test_post_expense_unknown_fields(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.post(
+        "/expenses",
+        json={"amount": 12.5, "category": "food", "name": "bread", "abc": "extra"},
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "unknown fields: abc"}
+
+    response = client.get("/expenses")
+
+    assert response.status_code == 200
+    assert response.get_json() == []
+
+
+def test_post_expense_multiple_unknown_fields(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.post(
+        "/expenses",
+        json={
+            "amount": 12.5,
+            "category": "food",
+            "name": "bread",
+            "currency": "MDL",
+            "abc": "extra",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "unknown fields: abc, currency"}
+
+    response = client.get("/expenses")
+
+    assert response.status_code == 200
+    assert response.get_json() == []

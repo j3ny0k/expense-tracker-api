@@ -68,6 +68,16 @@ def api_create_expense():
     if not isinstance(data, dict):
         return jsonify({"error": "JSON object is required"}), 400
 
+    allowed_fields = {"amount", "category", "name"}
+
+    unknown_fields = set(data) - allowed_fields
+
+    if unknown_fields:
+        return (
+            jsonify({"error": f"unknown fields: {', '.join(sorted(unknown_fields))}"}),
+            400,
+        )
+
     if "amount" not in data:
         return jsonify({"error": "amount is required"}), 400
 
