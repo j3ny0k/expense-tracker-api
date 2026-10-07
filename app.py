@@ -114,6 +114,27 @@ def api_get_expenses():
     if auth_error is not None:
         return auth_error
 
+    allowed_query_parameters = {
+        "category",
+        "name",
+        "name_contains",
+        "min_amount",
+        "max_amount",
+        "sort",
+        "limit",
+        "offset",
+    }
+
+    result = set(request.args) - allowed_query_parameters
+
+    if result:
+        return (
+            jsonify(
+                {"error": f"unknown query parameters: {", ".join(sorted(result))}"}
+            ),
+            400,
+        )
+
     category = request.args.get("category")
 
     name = request.args.get("name")

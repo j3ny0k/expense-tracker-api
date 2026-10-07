@@ -13,7 +13,7 @@ REST API for expense tracking built with **Python, Flask, SQLite/PostgreSQL, pyt
 - SQL aggregation for category totals and total expenses
 - largest-expense query with deterministic tie-breaking
 - SQLite by default with optional PostgreSQL via `DATABASE_URL`
-- 97 automated tests
+- 99 automated tests
 - GitHub Actions CI with runtime HTTP smoke testing
 - production-style startup with Waitress
 - Dockerized application runtime
@@ -110,7 +110,7 @@ The project uses `pytest`.
 Current test suite:
 
 ```text
-97 passed
+99 passed
 ```
 
 Tests cover API behavior, validation, authentication, database operations, filtering, sorting, pagination, aggregations, updates, and deletion.

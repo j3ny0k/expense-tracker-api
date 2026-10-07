@@ -1387,3 +1387,25 @@ def test_post_expense_multiple_unknown_fields(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert response.get_json() == []
+
+
+def test_get_expenses_unknown_query_parameter(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses?banana=1")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "unknown query parameters: banana"}
+
+
+def test_get_expenses_multiple_unknown_query_parameters(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses?zebra=1&banana=1")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "unknown query parameters: banana, zebra"}
