@@ -8,6 +8,45 @@ from migrations import run_migrations
 DB_NAME = os.getenv("DATABASE_PATH", "expenses.db")
 
 
+def add_expense_filters(
+    category=None,
+    name=None,
+    name_contains=None,
+    min_amount=None,
+    max_amount=None,
+    sql=None,
+):
+    placeholder = "%s" if os.getenv("DATABASE_URL") else "?"
+
+    conditions = []
+    params = []
+
+    if category is not None:
+        conditions.append(f"LOWER(category) = LOWER({placeholder})")
+        params.append(category)
+
+    if name is not None:
+        conditions.append(f"LOWER(name) = LOWER({placeholder})")
+        params.append(name)
+
+    if name_contains is not None:
+        conditions.append(f"LOWER(name) LIKE {placeholder}")
+        params.append(f"%{name_contains.lower()}%")
+
+    if min_amount is not None:
+        conditions.append(f"amount >= {placeholder}")
+        params.append(min_amount)
+
+    if max_amount is not None:
+        conditions.append(f"amount <= {placeholder}")
+        params.append(max_amount)
+
+    if conditions:
+        sql += " WHERE " + " AND ".join(conditions)
+
+    return sql, params
+
+
 def check_database():
     connection = get_connection()
 
@@ -75,33 +114,11 @@ def get_expenses(
 
     placeholder = "%s" if os.getenv("DATABASE_URL") else "?"
 
-    conditions = []
-    params = []
-
-    if category is not None:
-        conditions.append(f"LOWER(category) = LOWER({placeholder})")
-        params.append(category)
-
-    if name is not None:
-        conditions.append(f"LOWER(name) = LOWER({placeholder})")
-        params.append(name)
-
-    if name_contains is not None:
-        conditions.append(f"LOWER(name) LIKE {placeholder}")
-        params.append(f"%{name_contains.lower()}%")
-
-    if min_amount is not None:
-        conditions.append(f"amount >= {placeholder}")
-        params.append(min_amount)
-
-    if max_amount is not None:
-        conditions.append(f"amount <= {placeholder}")
-        params.append(max_amount)
-
     sql = "SELECT id, amount, category, name FROM expenses"
 
-    if conditions:
-        sql += " WHERE " + " AND ".join(conditions)
+    sql, params = add_expense_filters(
+        category, name, name_contains, min_amount, max_amount, sql
+    )
 
     if sort == "amount_asc":
         sql += " ORDER BY amount ASC"
@@ -307,35 +324,11 @@ def count_expenses(
 ):
     connection = get_connection()
 
-    placeholder = "%s" if os.getenv("DATABASE_URL") else "?"
-
-    conditions = []
-    params = []
-
-    if category is not None:
-        conditions.append(f"LOWER(category) = LOWER({placeholder})")
-        params.append(category)
-
-    if name is not None:
-        conditions.append(f"LOWER(name) = LOWER({placeholder})")
-        params.append(name)
-
-    if name_contains is not None:
-        conditions.append(f"LOWER(name) LIKE {placeholder}")
-        params.append(f"%{name_contains.lower()}%")
-
-    if min_amount is not None:
-        conditions.append(f"amount >= {placeholder}")
-        params.append(min_amount)
-
-    if max_amount is not None:
-        conditions.append(f"amount <= {placeholder}")
-        params.append(max_amount)
-
     sql = "SELECT COUNT(*) FROM expenses"
 
-    if conditions:
-        sql += " WHERE " + " AND ".join(conditions)
+    sql, params = add_expense_filters(
+        category, name, name_contains, min_amount, max_amount, sql
+    )
 
     total_count = connection.execute(sql, params).fetchone()[0]
 
