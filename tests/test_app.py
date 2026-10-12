@@ -1092,6 +1092,25 @@ def test_get_expenses_total_count_with_filter_and_pagination(tmp_path, monkeypat
     assert response.get_json()[0].get("category") == "food"
     assert response.headers["X-Total-Count"] == "2"
 
+    response = client.get("/expenses?category=food&limit=1&offset=1")
+
+    assert response.status_code == 200
+    assert response.get_json() == [
+        {
+            "id": 3,
+            "amount": 300.0,
+            "category": "food",
+            "name": "bread",
+        }
+    ]
+    assert response.headers["X-Total-Count"] == "2"
+
+    response = client.get("/expenses?category=food&limit=1&offset=2")
+
+    assert response.status_code == 200
+    assert response.get_json() == []
+    assert response.headers["X-Total-Count"] == "2"
+
 
 def test_get_expenses_total_count_empty_result(tmp_path, monkeypatch):
     init_db_for_test(tmp_path, monkeypatch)
