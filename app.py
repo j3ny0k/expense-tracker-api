@@ -1,7 +1,9 @@
+import csv
 import math
 import os
+from io import StringIO
 
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
 
 from db import (
     calculate_total_by_amount,
@@ -66,6 +68,18 @@ def check_unknown_fields(data):
             jsonify({"error": f"unknown fields: {', '.join(sorted(unknown_fields))}"}),
             400,
         )
+
+
+def expenses_to_csv(expenses):
+    output = StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(["id", "amount", "category", "name"])
+
+    for e in expenses:
+        writer.writerow([str(e["id"]), e["amount"], e["category"], e["name"]])
+
+    return output.getvalue()
 
 
 @app.post("/expenses")
@@ -298,6 +312,23 @@ def api_find_largest_valid_expense():
     largest = get_largest_expense()
 
     return jsonify(largest), 200
+
+
+@app.get("/expenses/export")
+def api_field():
+    auth_error = check_api_key()
+
+    if auth_error is not None:
+        return auth_error
+
+    expenses = get_expenses()
+    csv_text = expenses_to_csv(expenses)
+
+    response = Response(csv_text, mimetype="text/csv")
+
+    response.headers["Content-Disposition"] = 'attachment; filename="expenses.csv"'
+
+    return response, 200
 
 
 @app.patch("/expenses/<int:expense_id>")

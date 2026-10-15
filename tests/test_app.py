@@ -1428,3 +1428,62 @@ def test_get_expenses_multiple_unknown_query_parameters(tmp_path, monkeypatch):
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "unknown query parameters: banana, zebra"}
+
+
+def test_export_expenses_csv(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "pizza")
+
+    response = client.get("/expenses/export")
+
+    assert response.status_code == 200
+    assert response.get_data(as_text=True) == (
+        "id,amount,category,name\r\n" "1,100.0,food,pizza\r\n"
+    )
+    assert response.mimetype == "text/csv"
+    assert (
+        response.headers["Content-Disposition"] == 'attachment; filename="expenses.csv"'
+    )
+
+
+def test_export_expenses_csv_without_api_key(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses/export")
+
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "unauthorized"}
+
+
+def test_export_expenses_csv_empty(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses/export")
+
+    assert response.status_code == 200
+    assert response.get_data(as_text=True) == "id,amount,category,name\r\n"
+
+
+def test_export_expenses_csv_special_characters(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(120.0, "food", "Хлеб, молоко")
+    create_expense(35.0, "transport", 'Такси "Центр"')
+
+    response = client.get("/expenses/export")
+
+    assert response.status_code == 200
+    assert response.get_data(as_text=True) == (
+        "id,amount,category,name\r\n"
+        '1,120.0,food,"Хлеб, молоко"\r\n'
+        '2,35.0,transport,"Такси ""Центр"""\r\n'
+    )
