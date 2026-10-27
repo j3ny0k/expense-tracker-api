@@ -20,6 +20,7 @@ from db import (
     update_expense,
 )
 from expense_logic import (
+    calculate_budget_report,
     validate_amount,
     validate_category,
     validate_name,
@@ -150,8 +151,12 @@ def api_get_expenses():
         )
 
     category = request.args.get("category")
+    if category is not None:
+        category = category.strip()
 
     name = request.args.get("name")
+    if name is not None:
+        name = name.strip()
 
     name_contains = request.args.get("name_contains")
 
@@ -254,7 +259,7 @@ def api_get_expense_by_id(expense_id):
     expense = get_expense_by_id(expense_id)
 
     if expense is None:
-        return jsonify({"error": "expense not found"}), 404
+        return jsonify({"error": "expense not found", "id": expense_id}), 404
 
     return jsonify(expense), 200
 
@@ -281,6 +286,42 @@ def api_calculate_total_by_amount():
     total = calculate_total_by_amount()
 
     return jsonify(total), 200
+
+
+@app.get("/expenses/budget")
+def api_expenses_budget():
+    auth_error = check_api_key()
+    if auth_error is not None:
+        return auth_error
+
+    category = request.args.get("category")
+
+    budget = request.args.get("budget")
+
+    if budget is not None:
+        try:
+            budget = float(budget)
+        except ValueError:
+            return jsonify({"error": "budget must be a positive finite number"}), 400
+
+        if not validate_amount({"amount": budget}):
+            return jsonify({"error": "budget must be a positive finite number"}), 400
+
+    else:
+        return jsonify({"error": "budget must be a positive finite number"}), 400
+
+    if not validate_category({"category": category}):
+        return jsonify({"error": "category is required"}), 400
+
+    category = category.strip()
+
+    expenses = get_expenses(category=category)
+
+    report = calculate_budget_report(expenses, budget)
+
+    report["category"] = category
+
+    return jsonify(report), 200
 
 
 @app.get("/expenses/summary")

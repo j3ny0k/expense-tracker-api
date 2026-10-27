@@ -13,7 +13,7 @@ REST API for expense tracking built with **Python, Flask, SQLite/PostgreSQL, pyt
 - SQL aggregation for category totals and total expenses
 - largest-expense query with deterministic tie-breaking
 - SQLite by default with optional PostgreSQL via `DATABASE_URL`
-- 103 automated tests
+- 110 automated tests
 - GitHub Actions CI with runtime HTTP smoke testing
 - production-style startup with Waitress
 - Dockerized application runtime
@@ -59,6 +59,7 @@ expenses (
 | DELETE | `/expenses`         | Delete all expenses                       |
 | GET    | `/expenses/totals`  | Totals grouped by category                |
 | GET    | `/expenses/total`   | Total amount of all expenses              |
+| GET    | `/expenses/budget`  | Budget report for a selected category     |
 | GET    | `/expenses/largest` | Largest expense                           |
 
 ## Query parameters
@@ -82,6 +83,28 @@ expenses (
 Filtering, sorting, and pagination can be combined.
 
 Successful list responses include `X-Total-Count`, which reports the number of matching expenses before pagination.
+
+### Budget report
+
+`GET /expenses/budget` requires:
+
+- `category` — a non-empty expense category.
+- `budget` — a positive finite number.
+
+Example request:
+`GET /expenses/budget?category=food&budget=1000`
+
+If food expenses total 400, the response is:
+
+```json
+{
+  "category": "food",
+  "budget": 1000.0,
+  "spent": 400.0,
+  "remaining": 600.0,
+  "over_budget": false
+}
+```
 
 ## Authentication
 
@@ -110,7 +133,7 @@ The project uses `pytest`.
 Current test suite:
 
 ```text
-103 passed
+110 passed
 ```
 
 Tests cover API behavior, validation, authentication, database operations, filtering, sorting, pagination, aggregations, updates, and deletion.

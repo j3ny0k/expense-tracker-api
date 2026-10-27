@@ -40,7 +40,7 @@ def test_get_expense_undefined_id(tmp_path, monkeypatch):
     response = client.get("/expenses/1")
 
     assert response.status_code == 404
-    assert response.get_json() == {"error": "expense not found"}
+    assert response.get_json() == {"error": "expense not found", "id": 1}
 
 
 def test_get_expense_1(tmp_path, monkeypatch):
@@ -1487,3 +1487,106 @@ def test_export_expenses_csv_special_characters(tmp_path, monkeypatch):
         '1,120.0,food,"Хлеб, молоко"\r\n'
         '2,35.0,transport,"Такси ""Центр"""\r\n'
     )
+
+
+def test_budget_within_limit(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "bread")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "pizza")
+
+    response = client.get("/expenses/budget?category=food&budget=1000")
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "budget": 1000.0,
+        "category": "food",
+        "over_budget": False,
+        "remaining": 600.0,
+        "spent": 400.0,
+    }
+
+
+def test_budget_over_limit(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    create_expense(100.0, "food", "bread")
+    create_expense(200.0, "transport", "bus")
+    create_expense(300.0, "food", "pizza")
+
+    response = client.get("/expenses/budget?category=food&budget=300")
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "budget": 300.0,
+        "category": "food",
+        "over_budget": True,
+        "remaining": -100.0,
+        "spent": 400.0,
+    }
+
+
+def test_budget_no_expenses(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses/budget?category=abc&budget=1000")
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "budget": 1000.0,
+        "category": "abc",
+        "over_budget": False,
+        "remaining": 1000.0,
+        "spent": 0,
+    }
+
+
+def test_budget_zero(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses/budget?category=food&budget=0")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "budget must be a positive finite number"}
+
+
+def test_budget_missing(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses/budget?category=food")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "budget must be a positive finite number"}
+
+
+def test_budget_invalid_number(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = create_test_client()
+
+    response = client.get("/expenses/budget?category=food&budget=abc")
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "budget must be a positive finite number"}
+
+
+def test_budget_without_api_key(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+
+    client = app.test_client()
+
+    response = client.get("/expenses/budget?category=food&budget=1000")
+
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "unauthorized"}
