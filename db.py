@@ -335,3 +335,36 @@ def count_expenses(
     connection.close()
 
     return total_count
+
+
+def set_category_budget(category, budget):
+    connection = get_connection()
+    placeholder = "%s" if os.getenv("DATABASE_URL") else "?"
+
+    try:
+        connection.execute(
+            f"""
+            INSERT INTO category_budgets (category, budget)
+            VALUES ({placeholder}, {placeholder})
+            ON CONFLICT (category) DO UPDATE SET budget = EXCLUDED.budget
+            """,
+            (category, budget),
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+
+def get_category_budget(category):
+    connection = get_connection()
+    placeholder = "%s" if os.getenv("DATABASE_URL") else "?"
+
+    try:
+        row = connection.execute(
+            f"SELECT budget FROM category_budgets WHERE category = {placeholder}",
+            (category,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+    return None if row is None else row[0]

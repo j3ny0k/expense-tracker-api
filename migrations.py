@@ -22,8 +22,18 @@ def migration_1_create_expenses(connection):
         """)
 
 
+def migration_2_create_category_budgets(connection):
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS category_budgets (
+            category TEXT PRIMARY KEY,
+            budget REAL NOT NULL
+        )
+    """)
+
+
 MIGRATIONS = [
     (1, migration_1_create_expenses),
+    (2, migration_2_create_category_budgets),
 ]
 
 

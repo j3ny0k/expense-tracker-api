@@ -3,11 +3,13 @@ from db import (
     calculate_totals_by_category,
     create_expense,
     delete_expense,
+    get_category_budget,
     get_connection,
     get_expense_by_id,
     get_expenses,
     get_largest_expense,
     init_db,
+    set_category_budget,
     update_expense,
 )
 
@@ -21,10 +23,13 @@ def test_init_db(tmp_path, monkeypatch):
 
     connection = get_connection()
     columns = connection.execute("PRAGMA table_info(expenses)").fetchall()
+    budget_columns = connection.execute(
+        "PRAGMA table_info(category_budgets)"
+    ).fetchall()
     versions = connection.execute("SELECT version FROM schema_migrations").fetchall()
     connection.close()
 
-    assert versions == [(1,)]
+    assert versions == [(1,), (2,)]
 
     assert columns[0][1] == "id"
     assert columns[0][2] == "INTEGER"
@@ -43,6 +48,13 @@ def test_init_db(tmp_path, monkeypatch):
     assert columns[1][3] == 1
     assert columns[2][3] == 1
     assert columns[3][3] == 1
+
+    assert [(col[1], col[2]) for col in budget_columns] == [
+        ("category", "TEXT"),
+        ("budget", "REAL"),
+    ]
+    assert budget_columns[0][5] == 1  # PRIMARY KEY
+    assert budget_columns[1][3] == 1  # NOT NULL
 
     assert test_db.exists()
 
@@ -365,3 +377,32 @@ def test_get_expenses_filter_by_category(tmp_path, monkeypatch):
             "name": "pizza",
         }
     ]
+
+
+def test_category_budget_saved_and_updated(tmp_path, monkeypatch):
+    monkeypatch.setattr("db.DB_NAME", tmp_path / "expenses.db")
+    init_db()
+
+    assert get_category_budget("food") is None
+    set_category_budget("food", 1000.0)
+    assert get_category_budget("food") == 1000.0
+
+    set_category_budget("food", 1500.0)
+    init_db()  # Migrating a second time must not delete saved budgets
+    assert get_category_budget("food") == 1500.0
+
+    connection = get_connection()
+    rows = connection.execute(
+        "SELECT category, budget FROM category_budgets"
+    ).fetchall()
+    connection.close()
+    assert rows == [("food", 1500.0)]
+
+
+def test_category_budgets_are_separate(tmp_path, monkeypatch):
+    monkeypatch.setattr("db.DB_NAME", tmp_path / "expenses.db")
+    init_db()
+    set_category_budget("food", 1000)
+    set_category_budget("transport", 1000)
+    assert get_category_budget("food") == 1000
+    assert get_category_budget("transport") == 1000

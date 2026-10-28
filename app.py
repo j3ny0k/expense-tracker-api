@@ -13,10 +13,12 @@ from db import (
     create_expense,
     delete_expense,
     delete_expenses,
+    get_category_budget,
     get_expense_by_id,
     get_expenses,
     get_largest_expense,
     init_db,
+    set_category_budget,
     update_expense,
 )
 from expense_logic import (
@@ -295,33 +297,58 @@ def api_expenses_budget():
         return auth_error
 
     category = request.args.get("category")
+    if not validate_category({"category": category}):
+        return jsonify({"error": "category is required"}), 400
 
-    budget = request.args.get("budget")
+    category = category.strip()
+    raw_budget = request.args.get("budget")
 
-    if budget is not None:
+    if raw_budget is None:
+        budget = get_category_budget(category.lower())
+        if budget is None:
+            return jsonify({"error": "budget not found", "category": category}), 404
+    else:
         try:
-            budget = float(budget)
+            budget = float(raw_budget)
         except ValueError:
             return jsonify({"error": "budget must be a positive finite number"}), 400
 
         if not validate_amount({"amount": budget}):
             return jsonify({"error": "budget must be a positive finite number"}), 400
 
-    else:
-        return jsonify({"error": "budget must be a positive finite number"}), 400
+    expenses = get_expenses(category=category)
+    report = calculate_budget_report(expenses, budget)
+    report["category"] = category
+    return jsonify(report), 200
+
+
+@app.put("/budgets/<category>")
+def api_set_category_budget(category):
+    auth_error = check_api_key()
+    if auth_error is not None:
+        return auth_error
 
     if not validate_category({"category": category}):
         return jsonify({"error": "category is required"}), 400
 
-    category = category.strip()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "JSON object is required"}), 400
 
-    expenses = get_expenses(category=category)
+    unknown_fields = set(data) - {"budget"}
+    if unknown_fields:
+        return (
+            jsonify({"error": f"unknown fields: {', '.join(sorted(unknown_fields))}"}),
+            400,
+        )
 
-    report = calculate_budget_report(expenses, budget)
+    if not validate_amount({"amount": data.get("budget")}):
+        return jsonify({"error": "budget must be a positive finite number"}), 400
 
-    report["category"] = category
-
-    return jsonify(report), 200
+    category = category.strip().lower()
+    budget = float(data["budget"])
+    set_category_budget(category, budget)
+    return jsonify({"category": category, "budget": budget}), 200
 
 
 @app.get("/expenses/summary")

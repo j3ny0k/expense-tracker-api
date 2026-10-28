@@ -13,7 +13,7 @@ REST API for expense tracking built with **Python, Flask, SQLite/PostgreSQL, pyt
 - SQL aggregation for category totals and total expenses
 - largest-expense query with deterministic tie-breaking
 - SQLite by default with optional PostgreSQL via `DATABASE_URL`
-- 110 automated tests
+- 120 automated tests
 - GitHub Actions CI with runtime HTTP smoke testing
 - production-style startup with Waitress
 - Dockerized application runtime
@@ -46,21 +46,22 @@ expenses (
 
 ## API
 
-| Method | Endpoint            | Description                               |
-| ------ | ------------------- | ----------------------------------------- |
-| GET    | `/ready`            | Readiness check for database connectivity |
-| GET    | `/health`           | Health check                              |
-| GET    | `/expenses`         | List, filter, sort, and paginate expenses |
-| GET    | `/expenses/summary` | Count, total amount, and largest expense  |
-| POST   | `/expenses`         | Create an expense                         |
-| GET    | `/expenses/<id>`    | Get one expense                           |
-| PATCH  | `/expenses/<id>`    | Update an expense                         |
-| DELETE | `/expenses/<id>`    | Delete one expense                        |
-| DELETE | `/expenses`         | Delete all expenses                       |
-| GET    | `/expenses/totals`  | Totals grouped by category                |
-| GET    | `/expenses/total`   | Total amount of all expenses              |
-| GET    | `/expenses/budget`  | Budget report for a selected category     |
-| GET    | `/expenses/largest` | Largest expense                           |
+| Method | Endpoint              | Description                               |
+| ------ | --------------------- | ----------------------------------------- |
+| GET    | `/ready`              | Readiness check for database connectivity |
+| GET    | `/health`             | Health check                              |
+| GET    | `/expenses`           | List, filter, sort, and paginate expenses |
+| GET    | `/expenses/summary`   | Count, total amount, and largest expense  |
+| POST   | `/expenses`           | Create an expense                         |
+| GET    | `/expenses/<id>`      | Get one expense                           |
+| PATCH  | `/expenses/<id>`      | Update an expense                         |
+| DELETE | `/expenses/<id>`      | Delete one expense                        |
+| DELETE | `/expenses`           | Delete all expenses                       |
+| GET    | `/expenses/totals`    | Totals grouped by category                |
+| GET    | `/expenses/total`     | Total amount of all expenses              |
+| GET    | `/expenses/budget`    | Budget report (saved or supplied limit)   |
+| PUT    | `/budgets/<category>` | Create or replace a category budget       |
+| GET    | `/expenses/largest`   | Largest expense                           |
 
 ## Query parameters
 
@@ -86,10 +87,10 @@ Successful list responses include `X-Total-Count`, which reports the number of m
 
 ### Budget report
 
-`GET /expenses/budget` requires:
-
-- `category` — a non-empty expense category.
-- `budget` — a positive finite number.
+`GET /expenses/budget` requires `category` (a non-empty expense category).
+The query parameter `budget` is optional: if omitted, the API reads the saved limit for that category.
+If neither a saved limit nor an explicit budget exists, it returns `404` (`budget not found`).
+The query parameter `budget`, when supplied, must be a positive finite number.
 
 Example request:
 `GET /expenses/budget?category=food&budget=1000`
@@ -105,6 +106,24 @@ If food expenses total 400, the response is:
   "over_budget": false
 }
 ```
+
+### Saved category budgets
+
+Create or replace a limit (requires the same `X-API-Key` header as expense routes):
+
+```http
+PUT /budgets/food
+Content-Type: application/json
+X-API-Key: your-api-key
+
+{"budget": 1000}
+```
+
+Response (`200`): `{"category": "food", "budget": 1000.0}`.
+Then request `GET /expenses/budget?category=food` (with the API key) to use the saved value.
+Saving the same category again replaces its previous limit.
+
+The `category_budgets` table is added by schema migration 2. Previously stored expenses remain unchanged.
 
 ## Authentication
 
@@ -130,11 +149,7 @@ Filtering, sorting, pagination, counting, and aggregations are performed directl
 
 The project uses `pytest`.
 
-Current test suite:
-
-```text
-110 passed
-```
+Current test suite contains **120 tests**. Run the test command below to verify them in your environment.
 
 Tests cover API behavior, validation, authentication, database operations, filtering, sorting, pagination, aggregations, updates, and deletion.
 

@@ -1566,8 +1566,8 @@ def test_budget_missing(tmp_path, monkeypatch):
 
     response = client.get("/expenses/budget?category=food")
 
-    assert response.status_code == 400
-    assert response.get_json() == {"error": "budget must be a positive finite number"}
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "budget not found", "category": "food"}
 
 
 def test_budget_invalid_number(tmp_path, monkeypatch):
@@ -1590,3 +1590,90 @@ def test_budget_without_api_key(tmp_path, monkeypatch):
 
     assert response.status_code == 401
     assert response.get_json() == {"error": "unauthorized"}
+
+
+def test_budget_report_uses_saved_limit(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    client = create_test_client()
+    create_expense(400, "food", "groceries")
+    create_expense(250, "transport", "bus")
+
+    saved = client.put("/budgets/food", json={"budget": 1000})
+    assert saved.status_code == 200
+    assert saved.get_json() == {"category": "food", "budget": 1000.0}
+
+    result = client.get("/expenses/budget?category=food")
+    assert result.status_code == 200
+    assert result.get_json() == {
+        "category": "food",
+        "budget": 1000.0,
+        "spent": 400.0,
+        "remaining": 600.0,
+        "over_budget": False,
+    }
+
+
+def test_saved_budget_can_be_replaced(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    client = create_test_client()
+    assert client.put("/budgets/food", json={"budget": 1000}).status_code == 200
+    assert client.put("/budgets/FOOD", json={"budget": 300}).status_code == 200
+
+    result = client.get("/expenses/budget?category=Food")
+    assert result.status_code == 200
+    assert result.get_json()["budget"] == 300.0
+
+
+def test_budget_report_without_saved_budget(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    client = create_test_client()
+    result = client.get("/expenses/budget?category=food")
+    assert result.status_code == 404
+    assert result.get_json() == {"error": "budget not found", "category": "food"}
+
+
+def test_explicit_budget_overrides_saved_limit(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    client = create_test_client()
+    client.put("/budgets/food", json={"budget": 1000})
+    result = client.get("/expenses/budget?category=food&budget=300")
+    assert result.status_code == 200
+    assert result.get_json()["budget"] == 300.0
+    assert client.get("/expenses/budget?category=food").get_json()["budget"] == 1000.0
+
+
+def test_budget_put_requires_api_key(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    client = app.test_client()
+    result = client.put("/budgets/food", json={"budget": 1000})
+    assert result.status_code == 401
+    assert result.get_json() == {"error": "unauthorized"}
+
+
+def test_budget_put_rejects_invalid_values(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    client = create_test_client()
+    for invalid in (0, -1, "abc", float("inf"), True):
+        result = client.put("/budgets/food", json={"budget": invalid})
+        assert result.status_code == 400
+        assert result.get_json() == {"error": "budget must be a positive finite number"}
+
+
+def test_budget_put_rejects_missing_json_and_extra_fields(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    client = create_test_client()
+    missing = client.put("/budgets/food")
+    assert missing.status_code == 400
+    assert missing.get_json() == {"error": "JSON object is required"}
+
+    extra = client.put("/budgets/food", json={"budget": 1000, "banana": 5})
+    assert extra.status_code == 400
+    assert extra.get_json() == {"error": "unknown fields: banana"}
+
+
+def test_budget_report_requires_category_with_saved_mode(tmp_path, monkeypatch):
+    init_db_for_test(tmp_path, monkeypatch)
+    client = create_test_client()
+    result = client.get("/expenses/budget")
+    assert result.status_code == 400
+    assert result.get_json() == {"error": "category is required"}
